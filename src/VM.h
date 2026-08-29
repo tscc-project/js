@@ -9,14 +9,14 @@
 #include <vector>
 namespace jspp {
 struct Binding { js_value value;bool constant=false; };
-struct PropertyAttributes { bool writable=true;bool enumerable=true;bool configurable=true; };
+struct PropertyAttributes { bool writable=true;bool enumerable=true;bool configurable=true;bool accessor=false;js_value getter;js_value setter; };
 struct Environment { std::unordered_map<std::string,Binding>bindings;std::shared_ptr<Environment>parent; };
 class Heap;
 using NativeInvoke=std::function<bool(const js_value&,const std::vector<js_value>&,const js_value&,bool,js_value&)>;
 using NativeFunction=std::function<bool(const std::vector<js_value>&,const js_value&,bool,js_value&,std::string&,Heap&,const NativeInvoke&)>;
-struct FunctionObject { std::shared_ptr<FunctionPrototype>prototype;std::shared_ptr<Environment>closure;std::unordered_map<std::string,js_value>properties;std::shared_ptr<ObjectValue>instance_prototype;std::shared_ptr<ObjectValue>object_prototype;NativeFunction native;std::string name;std::size_t length=0;bool constructible=true; };
+struct FunctionObject { std::shared_ptr<FunctionPrototype>prototype;std::shared_ptr<Environment>closure;std::unordered_map<std::string,js_value>properties;std::unordered_map<std::string,PropertyAttributes>attributes;std::shared_ptr<ObjectValue>instance_prototype;std::shared_ptr<ObjectValue>object_prototype;NativeFunction native;std::string name;std::size_t length=0;bool constructible=true; };
 struct ObjectValue { std::unordered_map<std::string,js_value>properties;std::unordered_map<std::string,PropertyAttributes>attributes;std::shared_ptr<ObjectValue>prototype; };
-struct ArrayValue { std::vector<js_value>elements;std::unordered_map<std::string,js_value>properties;std::shared_ptr<ObjectValue>prototype; };
+struct ArrayValue { std::vector<js_value>elements;std::unordered_map<std::string,js_value>properties;std::unordered_map<std::string,PropertyAttributes>attributes;std::shared_ptr<ObjectValue>prototype; };
 class Heap {
 public:
  std::shared_ptr<Environment>environment();std::shared_ptr<FunctionObject>function();

@@ -266,3 +266,13 @@ Primitive strings expose length, indexed characters and String prototype
 slice/includes/indexOf, while `String(value)` uses centralized conversion. The
 corpus is 138/138. Sparse-array semantics, iterators, callbacks beyond map,
 Unicode indexing and boxed String objects remain deferred.
+
+## JS10E shared descriptors and accessors (2026-08-29)
+
+Objects, arrays and functions now retain the same descriptor metadata shape and
+GC traces accessor functions. `defineProperty` accepts data or accessor
+descriptors across those values, `getOwnPropertyDescriptor` reflects them, and
+ordinary object getter/setter invocation uses the common VM invoker. Read-only
+flags are enforced on named array/function properties. The corpus is 148/148.
+Indexed array descriptors and fully unified exotic-object operations remain
+bounded future work.
