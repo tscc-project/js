@@ -85,3 +85,12 @@ performs reads/writes without repeating base or key evaluation. Missing
 properties produce `undefined`; invalid primitive bases are contained runtime
 errors. Prototype links exist only as reserved internal representation until
 JS6B defines traversal, receiver binding and construction semantics.
+
+## JS6B methods, prototypes and construction
+
+Member-call bytecode retains the evaluated receiver separately from the
+resolved function and installs it as the call environment's immutable `this`
+binding. Function values own a mutable instance-prototype object. Construct
+creates a receiver linked to that object, invokes the function, and selects an
+explicit reference return or the receiver. Lookup walks live prototype links;
+writes remain own-property writes. This is a deliberately descriptor-free model.

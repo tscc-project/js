@@ -9,7 +9,7 @@
     {"id":"control-flow","checkpoint":"JS4","status":{"tokenize":"tested","parse":"tested","compile":"tested","execute":"tested","error":"tested","embedding":"tested","conformance":"partial-planned"}},
     {"id":"functions-closures","checkpoint":"JS5","status":{"tokenize":"tested","parse":"tested","compile":"tested","execute":"tested","error":"tested","embedding":"tested","conformance":"partial-planned"}},
     {"id":"objects-arrays","checkpoint":"JS6A","status":{"tokenize":"tested","parse":"tested","compile":"tested","execute":"tested","error":"tested","embedding":"planned","conformance":"partial-planned"}},
-    {"id":"prototypes-construction","checkpoint":"JS6B","status":{"tokenize":"planned","parse":"planned","compile":"planned","execute":"planned","error":"planned","embedding":"planned","conformance":"planned"}},
+    {"id":"prototypes-construction","checkpoint":"JS6B","status":{"tokenize":"tested","parse":"tested","compile":"tested","execute":"tested","error":"tested","embedding":"planned","conformance":"partial-planned"}},
     {"id":"garbage-collection","checkpoint":"JS7","status":{"tokenize":"not-applicable","parse":"not-applicable","compile":"not-applicable","execute":"planned","error":"planned","embedding":"planned","conformance":"not-applicable"}},
     {"id":"exceptions","checkpoint":"JS8","status":{"tokenize":"planned","parse":"planned","compile":"planned","execute":"planned","error":"planned","embedding":"planned","conformance":"planned"}},
     {"id":"builtins","checkpoint":"JS9","status":{"tokenize":"not-applicable","parse":"not-applicable","compile":"not-applicable","execute":"planned","error":"planned","embedding":"planned","conformance":"planned"}},

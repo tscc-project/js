@@ -97,6 +97,12 @@ Property bytecode evaluates the base and key once and assignments leave the
 assigned value as their completion. Descriptors, methods, `this`, prototype
 traversal and `new` are deliberately reserved for JS6B.
 
+JS6B completes that bounded object-model slice with object-literal methods,
+receiver-preserving member calls, `this`, function prototype objects, live
+prototype lookup, constructors and JavaScript constructor-return selection.
+Descriptors/accessors, classes, built-in prototype families, `instanceof` and
+general member-expression constructor targets remain future work.
+
 Coordination update: tscc CP4/TC2 now uses one production `ProgramGraph`. It does
 not link or invoke JS++, and the test-only-first boundary is unchanged.
 

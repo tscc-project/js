@@ -57,6 +57,10 @@ array reads/writes, named/computed keys, shorthand, nesting, holes/length,
 reference aliasing and invalid primitive bases. Prototype and receiver evidence
 must remain in the separate JS6B family.
 
+JS6B expands the independent corpus to 56/56. Ten cases cover method receivers,
+computed calls, construction, prototype methods and late mutation, own-property
+shadowing, constructor return selection and non-constructor errors.
+
 JS0 establishes `make test` and `make test-sanitize`. The external runner accepts
 an explicit candidate and permits an empty corpus only during the scaffold
 checkpoint; JS1 removes that exception when lifecycle cases exist.

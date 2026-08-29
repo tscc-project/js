@@ -18,6 +18,8 @@ int main(){
  check(number(r,"const a={x:1};const b=a;b.x=42;a.x;")==42,"object aliasing result");
  check(number(r,"const x=42;({x}).x;")==42,"object shorthand result");
  check(number(r,"[1,,3].length;")==3,"array hole length result");
+ check(number(r,"const o={x:40,add(n){this.x=this.x+n;return this.x;}};o.add(2);")==42,"method receiver result");
+ check(number(r,"function Answer(n){this.value=n;}Answer.prototype.read=function(){return this.value;};const a=new Answer(42);a.read();")==42,"constructor prototype result");
  check(number(r,"let x=1;{let x=2;}x;")==1,"block scope result");
  check(js_eval(r,"const fixed=1;fixed=2;",&v)==JS_STATUS_RUNTIME_ERROR,"const assignment accepted");check(js_eval(r,"missing+1",&v)==JS_STATUS_RUNTIME_ERROR,"missing identifier accepted");check(js_eval(r,"1+true",&v)==JS_STATUS_RUNTIME_ERROR,"mixed arithmetic accepted");check(js_eval(r,"let x=1;let x=2;",&v)==JS_STATUS_SYNTAX_ERROR,"duplicate binding accepted");
  js_runtime_free(r);std::cout<<"JS++ functions/closures VM passed\n";

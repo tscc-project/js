@@ -8,7 +8,7 @@ struct Diagnostic { std::size_t offset=0,line=1,column=1;std::string message; };
 enum class TokenKind { End,Identifier,Number,String,Keyword,Punct };
 struct Token { TokenKind kind=TokenKind::End;std::string text;std::size_t offset=0,line=1,column=1; };
 struct Statement;
-enum class ExprKind { Number,String,Boolean,Null,Undefined,Identifier,Unary,Binary,Assignment,Conditional,Function,Call,Object,Array,Property };
+enum class ExprKind { Number,String,Boolean,Null,Undefined,Identifier,This,Unary,Binary,Assignment,Conditional,Function,Call,New,Object,Array,Property };
 struct Expr { ExprKind kind=ExprKind::Undefined;std::string text;double number=0;bool computed=false;std::unique_ptr<Expr>left,right,third;std::vector<std::unique_ptr<Expr>>arguments;std::vector<std::string>keys;std::vector<std::string>parameters;std::unique_ptr<Statement>function_body; };
 enum class StatementKind { Declaration,Expression,Block,If,While,For,Break,Continue,Return,FunctionDeclaration,Empty };
 struct Statement {

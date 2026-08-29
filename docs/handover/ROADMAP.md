@@ -23,8 +23,9 @@ later ordering changes when runtime and conformance evidence justifies it.
    closures, captured mutation and a bounded call stack.
 7. **JS6A - core objects — completed 2026-08-30:** object/array literals,
    named and computed properties, reads/writes, holes/length and aliasing.
-8. **JS6B - object model:** methods, `this`, prototypes, constructors and `new`;
-   descriptors remain a later object-model refinement.
+8. **JS6B - object model — completed 2026-08-30:** methods, receiver-bound
+   calls, `this`, live prototype lookup, constructors and `new`; descriptors
+   remain a later object-model refinement.
 8. **JS7 - GC:** tracing roots across VM/runtime/native handles, adversarial
    allocation, sanitizers, teardown, and Valgrind.
 9. **JS8 - exceptions:** throw/try/catch/finally, completion interaction, native
