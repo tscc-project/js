@@ -11,7 +11,7 @@ bool Lexer::lex(std::vector<Token>&out,Diagnostic&d){
   const auto start=i,sl=line,sc=col;
   if(std::isalpha(static_cast<unsigned char>(c))||c=='_'||c=='$'){
    while(i<source_.size()&&(std::isalnum(static_cast<unsigned char>(source_[i]))||source_[i]=='_'||source_[i]=='$'))advance(source_[i]);
-   auto text=source_.substr(start,i-start);const bool keyword=text=="let"||text=="const"||text=="var"||text=="true"||text=="false"||text=="null"||text=="undefined"||text=="if"||text=="else"||text=="while"||text=="for"||text=="break"||text=="continue"||text=="function"||text=="return"||text=="throw"||text=="try"||text=="catch"||text=="finally"||text=="this"||text=="new";
+   auto text=source_.substr(start,i-start);const bool keyword=text=="let"||text=="const"||text=="var"||text=="true"||text=="false"||text=="null"||text=="undefined"||text=="if"||text=="else"||text=="while"||text=="for"||text=="break"||text=="continue"||text=="function"||text=="return"||text=="throw"||text=="try"||text=="catch"||text=="finally"||text=="this"||text=="new"||text=="instanceof";
    out.push_back({keyword?TokenKind::Keyword:TokenKind::Identifier,text,start,sl,sc});continue;
   }
   if(std::isdigit(static_cast<unsigned char>(c))||(c=='.'&&i+1<source_.size()&&std::isdigit(static_cast<unsigned char>(source_[i+1])))){
@@ -28,7 +28,7 @@ bool Lexer::lex(std::vector<Token>&out,Diagnostic&d){
  }
  out.push_back({TokenKind::End,"",i,line,col});return true;
 }
-static int precedence(const std::string&o){if(o=="||")return 1;if(o=="&&")return 2;if(o=="=="||o=="!="||o=="==="||o=="!==")return 3;if(o=="<"||o=="<="||o==">"||o==">=")return 4;if(o=="+"||o=="-")return 5;if(o=="*"||o=="/"||o=="%")return 6;return -1;}
+static int precedence(const std::string&o){if(o=="||")return 1;if(o=="&&")return 2;if(o=="=="||o=="!="||o=="==="||o=="!==")return 3;if(o=="<"||o=="<="||o==">"||o==">="||o=="instanceof")return 4;if(o=="+"||o=="-")return 5;if(o=="*"||o=="/"||o=="%")return 6;return -1;}
 bool Parser::fail(const Token&t,const std::string&m){diagnostic_={t.offset,t.line,t.column,m};return false;}
 bool Parser::consume(const std::string&t,const std::string&m){if(tokens_[at_].text!=t)return fail(tokens_[at_],m);++at_;return true;}
 std::unique_ptr<Expr>Parser::function_expression(){

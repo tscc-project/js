@@ -13,7 +13,7 @@
     {"id":"garbage-collection","checkpoint":"JS7B","status":{"tokenize":"not-applicable","parse":"not-applicable","compile":"not-applicable","execute":"tested","error":"tested","embedding":"tested","conformance":"not-applicable"}},
     {"id":"exceptions","checkpoint":"JS8F","status":{"tokenize":"implemented","parse":"tested","compile":"tested","execute":"tested","error":"tested","embedding":"tested","conformance":"partial-planned"}},
     {"id":"conversions","checkpoint":"JS9A","status":{"tokenize":"not-applicable","parse":"not-applicable","compile":"implemented","execute":"tested","error":"tested","embedding":"tested","conformance":"partial-planned"}},
-    {"id":"builtins","checkpoint":"JS9","status":{"tokenize":"not-applicable","parse":"not-applicable","compile":"not-applicable","execute":"planned","error":"planned","embedding":"planned","conformance":"planned"}},
+    {"id":"builtins","checkpoint":"JS10C","status":{"tokenize":"implemented","parse":"tested","compile":"tested","execute":"tested","error":"tested","embedding":"planned","conformance":"partial-planned"}},
     {"id":"promises-jobs","checkpoint":"JS11","status":{"tokenize":"planned","parse":"planned","compile":"planned","execute":"planned","error":"planned","embedding":"planned","conformance":"planned"}},
     {"id":"modules","checkpoint":"JS12","status":{"tokenize":"planned","parse":"planned","compile":"planned","execute":"planned","error":"planned","embedding":"planned","conformance":"planned"}}
   ]

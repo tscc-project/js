@@ -248,3 +248,12 @@ preserves identity and uncaught formatting recognizes errors. VM conversions now
 dispatch user `valueOf`/`toString` for numeric/string/property-key operations.
 The corpus is 114/114. Full descriptors, `instanceof`, dynamic Function source,
 complete stacks and exception-producing conversion hooks remain future work.
+
+## JS10C descriptors and prototype reflection (2026-08-29)
+
+Ordinary objects now retain data-property writable/enumerable/configurable flags.
+`Object.create`, `getPrototypeOf`, `setPrototypeOf`, `defineProperty` and `keys`
+provide a bounded reflection surface, and `instanceof` walks object, array and
+function prototype chains through its own opcode. Cyclic prototype mutation and
+invalid/non-callable operands fail deterministically. The corpus is 124/124.
+Accessors, primitive boxing and complete descriptor invariants remain deferred.

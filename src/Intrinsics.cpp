@@ -1,11 +1,14 @@
 #include "Intrinsics.h"
 #include "Conversion.h"
+#include <algorithm>
 
 namespace jspp {
 namespace {
 js_value string_value(std::string text){js_value value;value.kind=JS_VALUE_STRING;value.string=std::move(text);return value;}
 js_value number_value(double number){js_value value;value.kind=JS_VALUE_NUMBER;value.number=number;return value;}
 js_value undefined_value(){return {};}
+bool object_value(const js_value&value,std::shared_ptr<ObjectValue>&object){if(value.kind==JS_VALUE_OBJECT&&value.object){object=value.object;return true;}return false;}
+bool own(const std::shared_ptr<ObjectValue>&object,const std::string&name,js_value&value){auto found=object->properties.find(name);if(found==object->properties.end())return false;value=found->second;return true;}
 }
 
 js_value make_native(Heap&heap,const std::string&name,std::size_t length,bool constructible,
@@ -37,6 +40,32 @@ IntrinsicSet create_intrinsics(Heap&heap){
         set.function_prototype,set.object_prototype);
     set.object_prototype->properties["valueOf"]=value_of;
     set.object_prototype->properties["toString"]=object_to_string;
+
+    object.function->properties["create"]=make_native(heap,"create",2,false,
+        [](const std::vector<js_value>&args,const js_value&,bool,js_value&out,std::string&error,Heap&heap,const NativeInvoke&){
+            if(args.empty()||(args[0].kind!=JS_VALUE_OBJECT&&args[0].kind!=JS_VALUE_NULL)){error="Object.create prototype must be an object or null";return false;}
+            out.kind=JS_VALUE_OBJECT;out.object=heap.object();if(args[0].kind==JS_VALUE_OBJECT)out.object->prototype=args[0].object;return true;
+        },set.function_prototype,set.object_prototype);
+    object.function->properties["getPrototypeOf"]=make_native(heap,"getPrototypeOf",1,false,
+        [](const std::vector<js_value>&args,const js_value&,bool,js_value&out,std::string&error,Heap&,const NativeInvoke&){
+            std::shared_ptr<ObjectValue>value;if(args.empty()||!object_value(args[0],value)){error="Object.getPrototypeOf requires an object";return false;}
+            if(value->prototype){out.kind=JS_VALUE_OBJECT;out.object=value->prototype;}else out.kind=JS_VALUE_NULL;return true;
+        },set.function_prototype,set.object_prototype);
+    object.function->properties["setPrototypeOf"]=make_native(heap,"setPrototypeOf",2,false,
+        [](const std::vector<js_value>&args,const js_value&,bool,js_value&out,std::string&error,Heap&,const NativeInvoke&){
+            std::shared_ptr<ObjectValue>value;if(args.size()<2||!object_value(args[0],value)||(args[1].kind!=JS_VALUE_OBJECT&&args[1].kind!=JS_VALUE_NULL)){error="Object.setPrototypeOf requires object and object-or-null prototype";return false;}
+            auto prototype=args[1].kind==JS_VALUE_OBJECT?args[1].object:std::shared_ptr<ObjectValue>{};for(auto at=prototype;at;at=at->prototype)if(at==value){error="cyclic prototype value";return false;}value->prototype=prototype;out=args[0];return true;
+        },set.function_prototype,set.object_prototype);
+    object.function->properties["defineProperty"]=make_native(heap,"defineProperty",3,false,
+        [](const std::vector<js_value>&args,const js_value&,bool,js_value&out,std::string&error,Heap&,const NativeInvoke&){
+            std::shared_ptr<ObjectValue>value,descriptor;if(args.size()<3||!object_value(args[0],value)||!object_value(args[2],descriptor)){error="Object.defineProperty requires object, key and descriptor";return false;}std::string key;if(!to_property_key(args[1],key)){error="invalid property key";return false;}
+            auto existing=value->attributes.find(key);if(existing!=value->attributes.end()&&!existing->second.configurable){error="cannot redefine non-configurable property '"+key+"'";return false;}
+            js_value field;PropertyAttributes attributes{false,false,false};if(own(descriptor,"value",field))value->properties[key]=field;else value->properties[key]={};if(own(descriptor,"writable",field))attributes.writable=to_boolean(field);if(own(descriptor,"enumerable",field))attributes.enumerable=to_boolean(field);if(own(descriptor,"configurable",field))attributes.configurable=to_boolean(field);value->attributes[key]=attributes;out=args[0];return true;
+        },set.function_prototype,set.object_prototype);
+    object.function->properties["keys"]=make_native(heap,"keys",1,false,
+        [](const std::vector<js_value>&args,const js_value&,bool,js_value&out,std::string&error,Heap&heap,const NativeInvoke&){
+            std::shared_ptr<ObjectValue>value;if(args.empty()||!object_value(args[0],value)){error="Object.keys requires an object";return false;}std::vector<std::string>keys;for(const auto&entry:value->properties){auto attributes=value->attributes.find(entry.first);if(attributes==value->attributes.end()||attributes->second.enumerable)keys.push_back(entry.first);}std::sort(keys.begin(),keys.end());out.kind=JS_VALUE_ARRAY;out.array=heap.array();for(auto&key:keys)out.array->elements.push_back(string_value(std::move(key)));return true;
+        },set.function_prototype,set.object_prototype);
 
     auto function_call=make_native(heap,"call",1,false,
         [](const std::vector<js_value>&args,const js_value&receiver,bool,js_value&out,std::string&error,Heap&,const NativeInvoke&invoke){
