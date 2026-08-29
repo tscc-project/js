@@ -18,8 +18,9 @@ later ordering changes when runtime and conformance evidence justifies it.
    loops, short-circuiting, assignment, conditional expressions,
    break/continue, evaluation-order evidence, const enforcement and a bounded
    instruction budget.
-6. **JS5 - functions:** calls, parameters, return, recursion, environments,
-   closures, then arrows.
+6. **JS5 - functions — completed 2026-08-30:** ordinary/arrow functions, calls,
+   parameters, return, recursion, parent-linked block/function environments,
+   closures, captured mutation and a bounded call stack.
 7. **JS6 - objects:** arrays, properties/descriptors, computed access, methods,
    `this`, prototypes, constructors, and `new`.
 8. **JS7 - GC:** tracing roots across VM/runtime/native handles, adversarial

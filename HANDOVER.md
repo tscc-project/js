@@ -83,6 +83,14 @@ expressions and a one-million-instruction evaluation budget. Const assignment is
 rejected. Lexical block environments begin with JS5; calls, objects, coercive
 mixed arithmetic and templates remain explicitly unsupported.
 
+JS5 adds ordinary and arrow functions, calls, parameters, explicit/implicit
+return, recursion, parent-linked function/block environments and closures that
+retain and mutate captured bindings after their defining call returns. Calls
+share the evaluation instruction budget and have a 512-frame safety limit.
+Function values are identifiable through `js_value_kind`, but native calls and
+public invocation handles remain JS10 work. Shared ownership is provisional
+until JS7 replaces it with traced engine-managed lifetime.
+
 Coordination update: tscc CP4/TC2 now uses one production `ProgramGraph`. It does
 not link or invoke JS++, and the test-only-first boundary is unchanged.
 

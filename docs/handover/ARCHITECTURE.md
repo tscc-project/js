@@ -63,4 +63,15 @@ preserving expression results. Assignment keeps its value on the stack and the
 VM distinguishes mutable bindings from constants. Every evaluation has a fixed
 one-million-instruction budget so an infinite loop returns a contained runtime
 error. Full lexical environment chains and block-local binding scope are JS5
-work; this limitation is deliberate and externally documented.
+work; JS5 now closes that limitation.
+
+## JS5 functions and environments
+
+Function prototypes own nested bytecode and parameter metadata. Runtime function
+values pair a prototype with a retained lexical environment. Each call creates a
+child parameter environment, while blocks create child scopes; lookup and
+assignment walk parents, so closures survive their defining call and share
+captured mutable bindings. Return is explicit bytecode and unwinds active block
+scopes. The instruction budget is shared across recursive calls, with a separate
+512-frame limit. Shared-pointer ownership is an interim pre-GC model and cycles
+remain a JS7 collector concern.

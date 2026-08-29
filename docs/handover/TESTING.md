@@ -46,6 +46,12 @@ short-circuit side effects and deterministic termination of an infinite loop.
 Focused AST and VM tests additionally inspect jump-bearing bytecode and nested
 control-flow completion.
 
+JS5 expands the independent corpus to 36/36. Ten cases cover ordinary calls,
+missing arguments, explicit and implicit return, recursion, closures after outer
+return, shared captured mutation, expression/block arrows, block shadowing and
+non-callable errors. Focused VM tests preserve these alongside prior control-flow
+and primitive evidence.
+
 JS0 establishes `make test` and `make test-sanitize`. The external runner accepts
 an explicit candidate and permits an empty corpus only during the scaffold
 checkpoint; JS1 removes that exception when lifecycle cases exist.

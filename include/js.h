@@ -26,7 +26,7 @@ typedef enum js_status {
 } js_status;
 typedef enum js_value_kind {
     JS_VALUE_UNDEFINED=0, JS_VALUE_NULL=1, JS_VALUE_BOOLEAN=2,
-    JS_VALUE_NUMBER=3, JS_VALUE_STRING=4
+    JS_VALUE_NUMBER=3, JS_VALUE_STRING=4, JS_VALUE_FUNCTION=5
 } js_value_kind;
 
 JS_API const char *js_version(void);
