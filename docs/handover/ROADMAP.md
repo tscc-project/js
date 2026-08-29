@@ -11,8 +11,9 @@ later ordering changes when runtime and conformance evidence justifies it.
 3. **JS2 - frontend — completed 2026-08-30:** attributed sources/diagnostics,
    bounded ECMAScript tokens, executable primitive/declaration syntax, explicit
    semicolon/end rules and independent positive/negative parse tests.
-4. **JS3 - primitive VM:** inspectable bytecode and primitive values, variables,
-   arithmetic, comparisons, and completion values.
+4. **JS3 - primitive VM — completed 2026-08-30:** inspectable stack bytecode,
+   primitive values, initialized bindings, arithmetic, equality/order, unary
+   operations, completion values, CLI execution and C embedding results.
 5. **JS4 - control flow:** blocks, conditions, loops, short-circuiting,
    break/continue, and evaluation-order evidence.
 6. **JS5 - functions:** calls, parameters, return, recursion, environments,

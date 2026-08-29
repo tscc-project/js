@@ -6,6 +6,9 @@ CXXFLAGS ?= -std=c++17 -O2 -Wall -Wextra -pedantic
 BUILD := build
 OBJECT := $(BUILD)/Runtime.o
 FRONTEND_OBJECT := $(BUILD)/Frontend.o
+BYTECODE_OBJECT := $(BUILD)/Bytecode.o
+VM_OBJECT := $(BUILD)/VM.o
+LIB_OBJECTS := $(OBJECT) $(FRONTEND_OBJECT) $(BYTECODE_OBJECT) $(VM_OBJECT)
 CLI := $(BUILD)/js
 STATIC := $(BUILD)/libjs.a
 SHARED := $(BUILD)/libjs.so
@@ -18,28 +21,37 @@ $(OBJECT): src/Runtime.cpp src/Runtime.h include/js.h src/Version.h | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
 $(FRONTEND_OBJECT): src/Frontend.cpp src/Frontend.h | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
-$(STATIC): $(OBJECT)
+$(BYTECODE_OBJECT): src/Bytecode.cpp src/Bytecode.h src/Frontend.h | $(BUILD)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
+$(VM_OBJECT): src/VM.cpp src/VM.h src/Bytecode.h src/Runtime.h | $(BUILD)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
+$(STATIC): $(LIB_OBJECTS)
 	$(AR) rcs $@ $^
-$(SHARED): $(OBJECT)
+$(SHARED): $(LIB_OBJECTS)
 	$(CXX) -shared $^ -o $@
-$(CLI): src/main.cpp $(STATIC) $(FRONTEND_OBJECT)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) src/main.cpp $(FRONTEND_OBJECT) $(STATIC) -pthread -o $@
+$(CLI): src/main.cpp $(STATIC)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) src/main.cpp $(STATIC) -pthread -o $@
 $(BUILD)/lifecycle: tests/lifecycle.cpp $(STATIC)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tests/lifecycle.cpp $(STATIC) -pthread -o $@
 $(BUILD)/frontend: tests/frontend.cpp $(FRONTEND_OBJECT)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tests/frontend.cpp $(FRONTEND_OBJECT) -o $@
-test-unit: $(CLI) $(BUILD)/lifecycle $(BUILD)/frontend
+$(BUILD)/vm: tests/vm.cpp $(STATIC)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tests/vm.cpp $(STATIC) -pthread -o $@
+test-unit: $(CLI) $(BUILD)/lifecycle $(BUILD)/frontend $(BUILD)/vm
 	test "$$($(CLI) --version)" = "JS++ 0.0.0-dev"
 	./$(BUILD)/lifecycle
 	./$(BUILD)/frontend
+	./$(BUILD)/vm
 test-regression: all
 	python3 ../js-regression-suite/run.py --js "$(abspath $(CLI))" --include "$(abspath include)" --library "$(abspath $(STATIC))"
 test: test-unit test-regression
 test-sanitize:
 	mkdir -p $(BUILD)/san
-	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/lifecycle.cpp src/Runtime.cpp -pthread -o $(BUILD)/san/lifecycle
+	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/lifecycle.cpp src/Runtime.cpp src/Frontend.cpp src/Bytecode.cpp src/VM.cpp -pthread -o $(BUILD)/san/lifecycle
 	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/frontend.cpp src/Frontend.cpp -o $(BUILD)/san/frontend
+	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/vm.cpp src/Runtime.cpp src/Frontend.cpp src/Bytecode.cpp src/VM.cpp -pthread -o $(BUILD)/san/vm
 	ASAN_OPTIONS="$${ASAN_OPTIONS:-detect_leaks=1:halt_on_error=1}" UBSAN_OPTIONS=halt_on_error=1 ./$(BUILD)/san/lifecycle
 	ASAN_OPTIONS="$${ASAN_OPTIONS:-detect_leaks=1:halt_on_error=1}" UBSAN_OPTIONS=halt_on_error=1 ./$(BUILD)/san/frontend
+	ASAN_OPTIONS="$${ASAN_OPTIONS:-detect_leaks=1:halt_on_error=1}" UBSAN_OPTIONS=halt_on_error=1 ./$(BUILD)/san/vm
 clean:
 	rm -rf $(BUILD)

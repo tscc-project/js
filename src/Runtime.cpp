@@ -1,6 +1,10 @@
 #include "Runtime.h"
+#include "Bytecode.h"
+#include "Frontend.h"
+#include "VM.h"
 #include "Version.h"
 #include <new>
+#include <memory>
 
 extern "C" {
 const char*js_version(void){return JS_VERSION;}
@@ -12,10 +16,11 @@ js_status js_eval(js_runtime*r,const char*source,js_value**result){
  if(result)*result=nullptr;
  if(!r||!source||!result)return fail(r,JS_STATUS_INVALID_ARGUMENT,"runtime, source and result are required");
  if(r->owner!=std::this_thread::get_id())return fail(r,JS_STATUS_WRONG_THREAD,"runtime used from a non-owner thread");
- return fail(r,JS_STATUS_UNSUPPORTED,"evaluation is not implemented until JS3");
+ try{jspp::Program program;jspp::Diagnostic diagnostic;if(!jspp::parse_source(source,program,diagnostic))return fail(r,JS_STATUS_SYNTAX_ERROR,jspp::format_diagnostic(diagnostic).c_str());jspp::Bytecode code;std::string error;if(!jspp::compile(program,code,error))return fail(r,JS_STATUS_SYNTAX_ERROR,error.c_str());auto value=std::make_unique<js_value>();if(!jspp::execute(code,*value,error))return fail(r,JS_STATUS_RUNTIME_ERROR,error.c_str());r->values.insert(value.get());r->error.clear();*result=value.release();return JS_STATUS_OK;}catch(const std::bad_alloc&){return fail(r,JS_STATUS_OUT_OF_MEMORY,"out of memory");}catch(...){return fail(r,JS_STATUS_RUNTIME_ERROR,"internal runtime failure");}
 }
 void js_value_free(js_runtime*r,js_value*v){if(!r||!v)return;auto it=r->values.find(v);if(it!=r->values.end()){r->values.erase(it);delete v;}}
 js_value_kind js_value_get_kind(const js_value*v){return v?v->kind:JS_VALUE_UNDEFINED;}
 int js_value_get_boolean(const js_value*v,int*out){if(!v||!out||v->kind!=JS_VALUE_BOOLEAN)return 0;*out=v->boolean?1:0;return 1;}
 int js_value_get_number(const js_value*v,double*out){if(!v||!out||v->kind!=JS_VALUE_NUMBER)return 0;*out=v->number;return 1;}
+int js_value_get_string(const js_value*v,const char**data,size_t*size){if(!v||!data||!size||v->kind!=JS_VALUE_STRING)return 0;*data=v->string.data();*size=v->string.size();return 1;}
 }

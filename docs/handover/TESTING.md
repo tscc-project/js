@@ -35,6 +35,11 @@ JS2 adds focused AST-shape tests and eight independent `js --check` cases across
 precedence, bindings, primitives, comments, malformed delimiters/strings and
 unsupported statements. These are parse/error evidence only, not runtime claims.
 
+JS3 expands the independent corpus to 17/17: eight parse/error cases, eight
+runtime/error cases and one separately compiled C embedding case. Focused tests
+inspect bytecode shape and primitive handle extraction; sanitizer runs pressure
+runtime creation, frontend failure/recovery and VM execution.
+
 JS0 establishes `make test` and `make test-sanitize`. The external runner accepts
 an explicit candidate and permits an empty corpus only during the scaffold
 checkpoint; JS1 removes that exception when lifecycle cases exist.

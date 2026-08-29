@@ -5,7 +5,7 @@
   "dimensions": ["tokenize", "parse", "compile", "execute", "error", "embedding", "conformance"],
   "features": [
     {"id":"runtime-lifecycle","checkpoint":"JS1","status":{"tokenize":"not-applicable","parse":"not-applicable","compile":"not-applicable","execute":"implemented","error":"tested","embedding":"tested","conformance":"not-applicable"}},
-    {"id":"primitive-expressions","checkpoint":"JS3","status":{"tokenize":"tested","parse":"tested","compile":"planned","execute":"planned","error":"tested","embedding":"planned","conformance":"planned"}},
+    {"id":"primitive-expressions","checkpoint":"JS3","status":{"tokenize":"tested","parse":"tested","compile":"tested","execute":"tested","error":"tested","embedding":"tested","conformance":"partial-planned"}},
     {"id":"control-flow","checkpoint":"JS4","status":{"tokenize":"planned","parse":"planned","compile":"planned","execute":"planned","error":"planned","embedding":"partial-planned","conformance":"planned"}},
     {"id":"functions-closures","checkpoint":"JS5","status":{"tokenize":"planned","parse":"planned","compile":"planned","execute":"planned","error":"planned","embedding":"partial-planned","conformance":"planned"}},
     {"id":"objects-prototypes","checkpoint":"JS6","status":{"tokenize":"planned","parse":"planned","compile":"planned","execute":"planned","error":"planned","embedding":"planned","conformance":"planned"}},

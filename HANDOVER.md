@@ -74,8 +74,11 @@ until JS3.
 JS2 adds attributed lexer diagnostics and an executable AST for primitive
 literals, identifiers, initialized declarations, expression statements,
 parentheses, unary operations, arithmetic, equality and ordering. `js --check`
-is the external parse contract. Control flow, calls, objects and templates remain
-explicitly unsupported.
+is the external parse contract. JS3 lowers exactly this grammar to inspectable
+stack bytecode and executes number, string, boolean, null and undefined values,
+bindings, numeric arithmetic, same-type string concatenation, equality, ordering
+and unary operations. Control flow, assignment, coercive mixed arithmetic, calls,
+objects and templates remain explicitly unsupported.
 
 Coordination update: tscc CP4/TC2 now uses one production `ProgramGraph`. It does
 not link or invoke JS++, and the test-only-first boundary is unchanged.

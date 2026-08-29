@@ -38,6 +38,7 @@ JS_API void js_value_free(js_runtime *runtime,js_value *value);
 JS_API js_value_kind js_value_get_kind(const js_value *value);
 JS_API int js_value_get_boolean(const js_value *value,int *out);
 JS_API int js_value_get_number(const js_value *value,double *out);
+JS_API int js_value_get_string(const js_value *value,const char **data,size_t *size);
 
 #ifdef __cplusplus
 }

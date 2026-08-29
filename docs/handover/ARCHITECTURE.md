@@ -45,3 +45,12 @@ their runtime and are reclaimed explicitly or at runtime teardown. Null teardown
 is harmless. Primitive inspection calls exist before those value kinds become
 constructible at JS3. Binary compatibility is not yet promised, but C/C++
 implementation details cannot enter `js.h`.
+
+## JS3 execution slice
+
+The frontend lowers to an unoptimized inspectable stack instruction stream.
+The VM owns a per-evaluation binding environment and explicit completion stack.
+Values are understandable tagged C++ objects; there is no GC because this slice
+has no heap object graph. Arithmetic rejects unsupported mixed coercions rather
+than silently diverging. `js_eval`, the CLI and focused bytecode tests all consume
+the same parser/compiler/VM path.
