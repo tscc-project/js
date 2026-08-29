@@ -1,5 +1,6 @@
 #include "Bytecode.h"
 #include "Frontend.h"
+#include "VM.h"
 #include "js.h"
 #include <cstdlib>
 #include <iostream>
@@ -7,6 +8,7 @@
 static void check(bool x,const char*m){if(!x){std::cerr<<m<<'\n';std::exit(1);}}
 static double number(js_runtime*r,const char*source){js_value*v=nullptr;check(js_eval(r,source,&v)==JS_STATUS_OK,"numeric evaluation");double n=0;check(js_value_get_number(v,&n),"numeric result");js_value_free(r,v);return n;}
 int main(){
+ jspp::Program thrown_program;jspp::Diagnostic thrown_diagnostic;check(jspp::parse_source("throw 42;",thrown_program,thrown_diagnostic),"completion parse");jspp::Bytecode thrown_code;std::string thrown_error;check(jspp::compile(thrown_program,thrown_code,thrown_error),"completion compile");jspp::Completion completion;check(!jspp::execute_completion(thrown_code,completion,thrown_error)&&completion.kind==jspp::CompletionKind::Throw&&completion.value.kind==JS_VALUE_NUMBER&&completion.value.number==42,"explicit throw completion");
  jspp::Program p;jspp::Diagnostic d;check(jspp::parse_source("const x=2+3*4;x>=14;",p,d),"parse");jspp::Bytecode b;std::string e;check(jspp::compile(p,b,e),"compile");auto listing=jspp::disassemble(b);check(listing.find("multiply")!=std::string::npos&&listing.find("declare x")!=std::string::npos,"bytecode inspection");
  auto*r=js_runtime_new();js_value*v=nullptr;check(js_eval(r,"let x=6;(x*7)===42;",&v)==JS_STATUS_OK,"execute");int yes=0;check(js_value_get_boolean(v,&yes)&&yes,"boolean result");js_value_free(r,v);
  check(number(r,"let sum=0;for(let i=0;i<8;i=i+1){if(i===2)continue;if(i===6)break;sum=sum+i;}sum;")==13,"control flow result");

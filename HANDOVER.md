@@ -185,3 +185,9 @@ Explicit `throw` now has parser and bytecode identity, unwinds lexical scopes,
 propagates through calls and surfaces uncaught primitive values as deterministic
 runtime errors. `try`/`catch`/`finally`, exception objects and native exception
 APIs remain future work. The independent corpus is 62/62.
+## JS8B / CP23 completion records (2026-08-30)
+
+The VM now carries explicit Normal, Return, Throw, Break and Continue completion
+kinds. Throws retain their `js_value` across function frames and only the public
+execution boundary formats an uncaught runtime error. Break/continue remain
+compiled jumps until handler/finally evidence requires interception.
