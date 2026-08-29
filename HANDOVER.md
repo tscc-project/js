@@ -107,6 +107,7 @@ tag, release, deploy, or publish without explicit authorization.
 ## Deeper handovers
 
 - `docs/handover/ARCHITECTURE.md`: component ownership and invariants.
+- `docs/handover/PRODUCT-BOUNDARY.md`: settled CP1 relationship with tscc.
 - `docs/handover/ROADMAP.md`: adaptive JS0-JS15 implementation plan.
 - `docs/handover/TESTING.md`: external evidence and conformance methodology.
 
