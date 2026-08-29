@@ -63,9 +63,13 @@ void js_runtime_free(js_runtime *runtime);
 int js_eval(js_runtime *runtime, const char *source, js_value *result);
 ```
 
-This is direction, not yet a frozen ABI. Before implementing it, define error
-ownership, value lifetime, runtime affinity, allocator behaviour, thread safety,
-native re-entry, and versioning. Never document planned calls as released.
+JS1 freezes this initial source-level API, while binary compatibility remains
+pre-release. Runtime error strings are runtime-owned. Values are opaque,
+runtime-affine handles explicitly freed with `js_value_free` or reclaimed at
+runtime teardown. A runtime is confined to its creator thread. Allocation uses
+the process C++ allocator for now; failures and C++ exceptions are contained.
+Native callbacks and re-entry do not exist yet. `js_eval` reports unsupported
+until JS3.
 
 ## Development standard
 

@@ -36,3 +36,12 @@ The projects share language-domain concepts, not private implementation. tscc
 needs lossless TypeScript syntax and compiler recovery; JS++ needs executable
 ECMAScript syntax and runtime lowering. Source, token, syntax, or diagnostic reuse
 is a later public-API decision gate, not an initial architectural premise.
+
+## JS1 lifecycle contract
+
+`js_runtime` and `js_value` are opaque C handles. Runtime operations are
+creator-thread-only; error text belongs to the runtime; values cannot outlive
+their runtime and are reclaimed explicitly or at runtime teardown. Null teardown
+is harmless. Primitive inspection calls exist before those value kinds become
+constructible at JS3. Binary compatibility is not yet promised, but C/C++
+implementation details cannot enter `js.h`.

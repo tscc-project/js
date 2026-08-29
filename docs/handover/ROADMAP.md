@@ -5,8 +5,9 @@ later ordering changes when runtime and conformance evidence justifies it.
 
 1. **JS0 - foundation — completed 2026-08-30:** C++17 layout, Make build, CLI
    identity, sanitizer target, independent runner, handovers, and website.
-2. **JS1 - lifecycle:** opaque runtime/value types, creation/destruction,
-   evaluation entry point, errors, versioning, allocator/lifetime/thread rules.
+2. **JS1 - lifecycle — completed 2026-08-30:** opaque runtime/value types,
+   creation/destruction, reserved evaluation entry point, runtime-owned errors,
+   versioning and explicit allocator/lifetime/thread rules.
 3. **JS2 - frontend:** sources, diagnostics, lexer, executable parser, semicolon
    rules, malformed recovery, and independent parse tests.
 4. **JS3 - primitive VM:** inspectable bytecode and primitive values, variables,
