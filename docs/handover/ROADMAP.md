@@ -30,6 +30,8 @@ later ordering changes when runtime and conformance evidence justifies it.
    graph inventory and accounting without collection policy.
 10. **JS7B - traced collection — completed 2026-08-30:** runtime-handle roots,
    graph tracing, cycle reclamation, allocation pressure and teardown.
+11. **JS7C - execution safe points — completed 2026-08-30:** allocation
+   thresholds, active stack/environment roots, compaction and re-entry guards.
 9. **JS8 - exceptions:** throw/try/catch/finally, completion interaction, native
    propagation, reporting, and stacks.
 10. **JS9 - conversions/built-ins:** centralized coercions and foundational

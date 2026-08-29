@@ -114,6 +114,11 @@ breaks unreachable shared cycles before releasing them. Focused tests retain
 live handles across collections and reclaim closure/environment and self-object
 cycles under repeated allocation pressure.
 
+JS7C adds allocation-threshold safe points during top-level execution, roots the
+active operand stack and lexical environment, compacts expired heap inventory,
+and guards collector re-entry. Recursive calls collect only after control
+returns to a top-level safe point so caller-frame temporaries cannot be missed.
+
 Coordination update: tscc CP4/TC2 now uses one production `ProgramGraph`. It does
 not link or invoke JS++, and the test-only-first boundary is unchanged.
 

@@ -1,4 +1,5 @@
 #include "VM.h"
+#include <algorithm>
 #include <functional>
 #include <unordered_set>
 namespace jspp {
@@ -7,7 +8,9 @@ std::shared_ptr<FunctionObject>Heap::function(){auto v=std::make_shared<Function
 std::shared_ptr<ObjectValue>Heap::object(){auto v=std::make_shared<ObjectValue>();objects_.push_back(v);++allocations_;return v;}
 std::shared_ptr<ArrayValue>Heap::array(){auto v=std::make_shared<ArrayValue>();arrays_.push_back(v);++allocations_;return v;}
 std::size_t Heap::tracked()const{std::size_t n=0;for(const auto&v:environments_)n+=!v.expired();for(const auto&v:functions_)n+=!v.expired();for(const auto&v:objects_)n+=!v.expired();for(const auto&v:arrays_)n+=!v.expired();return n;}
-std::size_t Heap::collect(const std::vector<js_value>&roots){
+std::size_t Heap::collect(const std::vector<js_value>&roots,const std::vector<std::shared_ptr<Environment>>&environment_roots){
+ if(collecting_)return 0;
+ collecting_=true;
  std::vector<std::shared_ptr<Environment>>envs;std::vector<std::shared_ptr<FunctionObject>>funcs;std::vector<std::shared_ptr<ObjectValue>>objs;std::vector<std::shared_ptr<ArrayValue>>arrs;
  for(auto&v:environments_)if(auto x=v.lock())envs.push_back(x);
  for(auto&v:functions_)if(auto x=v.lock())funcs.push_back(x);
@@ -18,7 +21,8 @@ std::size_t Heap::collect(const std::vector<js_value>&roots){
  obj=[&](const auto&x){if(!x||!marked.insert(x.get()).second)return;obj(x->prototype);for(const auto&entry:x->properties)value(entry.second);};
  arr=[&](const auto&x){if(!x||!marked.insert(x.get()).second)return;obj(x->prototype);for(const auto&v:x->elements)value(v);for(const auto&entry:x->properties)value(entry.second);};
  fun=[&](const auto&x){if(!x||!marked.insert(x.get()).second)return;env(x->closure);obj(x->instance_prototype);for(const auto&entry:x->properties)value(entry.second);};
- value=[&](const js_value&v){if(v.kind==JS_VALUE_FUNCTION)fun(v.function);else if(v.kind==JS_VALUE_OBJECT)obj(v.object);else if(v.kind==JS_VALUE_ARRAY)arr(v.array);};for(const auto&root:roots)value(root);
- std::size_t reclaimed=0;for(auto&x:envs)if(!marked.count(x.get())){x->bindings.clear();x->parent.reset();++reclaimed;}for(auto&x:funcs)if(!marked.count(x.get())){x->properties.clear();x->closure.reset();x->instance_prototype.reset();++reclaimed;}for(auto&x:objs)if(!marked.count(x.get())){x->properties.clear();x->prototype.reset();++reclaimed;}for(auto&x:arrs)if(!marked.count(x.get())){x->elements.clear();x->properties.clear();x->prototype.reset();++reclaimed;}return reclaimed;
+ value=[&](const js_value&v){if(v.kind==JS_VALUE_FUNCTION)fun(v.function);else if(v.kind==JS_VALUE_OBJECT)obj(v.object);else if(v.kind==JS_VALUE_ARRAY)arr(v.array);};for(const auto&root:roots)value(root);for(const auto&root:environment_roots)env(root);
+ std::size_t reclaimed=0;for(auto&x:envs)if(!marked.count(x.get())){x->bindings.clear();x->parent.reset();++reclaimed;}for(auto&x:funcs)if(!marked.count(x.get())){x->properties.clear();x->closure.reset();x->instance_prototype.reset();++reclaimed;}for(auto&x:objs)if(!marked.count(x.get())){x->properties.clear();x->prototype.reset();++reclaimed;}for(auto&x:arrs)if(!marked.count(x.get())){x->elements.clear();x->properties.clear();x->prototype.reset();++reclaimed;}
+ auto compact=[](auto&items){items.erase(std::remove_if(items.begin(),items.end(),[](const auto&item){return item.expired();}),items.end());};compact(environments_);compact(functions_);compact(objects_);compact(arrays_);next_collection_=allocations_+64;++collections_;collecting_=false;return reclaimed;
 }
 }
