@@ -108,6 +108,12 @@ functions, objects and arrays. Every VM allocation now passes through `Heap`,
 which owns allocation accounting and weak graph inventory while preserving the
 existing 56/56 behavior. Collection remains deliberately inactive until JS7B.
 
+JS7B activates root tracing from runtime handles and graph traversal across VM
+values, properties, prototypes, functions, closures and environments. Sweep
+breaks unreachable shared cycles before releasing them. Focused tests retain
+live handles across collections and reclaim closure/environment and self-object
+cycles under repeated allocation pressure.
+
 Coordination update: tscc CP4/TC2 now uses one production `ProgramGraph`. It does
 not link or invoke JS++, and the test-only-first boundary is unchanged.
 

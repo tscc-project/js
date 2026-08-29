@@ -17,6 +17,7 @@ public:
  std::shared_ptr<Environment>environment();std::shared_ptr<FunctionObject>function();
  std::shared_ptr<ObjectValue>object();std::shared_ptr<ArrayValue>array();
  std::size_t allocations()const{return allocations_;}std::size_t tracked()const;
+ std::size_t collect(const std::vector<js_value>&roots);
 private:
  std::size_t allocations_=0;std::vector<std::weak_ptr<Environment>>environments_;
  std::vector<std::weak_ptr<FunctionObject>>functions_;std::vector<std::weak_ptr<ObjectValue>>objects_;

@@ -28,8 +28,8 @@ later ordering changes when runtime and conformance evidence justifies it.
    remain a later object-model refinement.
 9. **JS7A - heap foundation — completed 2026-08-30:** engine-owned allocation,
    graph inventory and accounting without collection policy.
-10. **JS7B - traced collection:** roots, cycle reclamation, adversarial
-   allocation, sanitizers and teardown.
+10. **JS7B - traced collection — completed 2026-08-30:** runtime-handle roots,
+   graph tracing, cycle reclamation, allocation pressure and teardown.
 9. **JS8 - exceptions:** throw/try/catch/finally, completion interaction, native
    propagation, reporting, and stacks.
 10. **JS9 - conversions/built-ins:** centralized coercions and foundational
