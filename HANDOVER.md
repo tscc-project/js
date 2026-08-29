@@ -110,6 +110,9 @@ tag, release, deploy, or publish without explicit authorization.
 - `docs/handover/PRODUCT-BOUNDARY.md`: settled CP1 relationship with tscc.
 - `docs/handover/ROADMAP.md`: adaptive JS0-JS15 implementation plan.
 - `docs/handover/TESTING.md`: external evidence and conformance methodology.
+- `docs/feature-matrix.json`: executable per-stage language/runtime status.
+
+Run `python3 tools/check_feature_matrix.py` whenever checkpoint status changes.
 
 These are living infrastructure. Consolidate durable decisions rather than
 appending an unstructured diary.
