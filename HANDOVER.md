@@ -276,3 +276,13 @@ ordinary object getter/setter invocation uses the common VM invoker. Read-only
 flags are enforced on named array/function properties. The corpus is 148/148.
 Indexed array descriptors and fully unified exotic-object operations remain
 bounded future work.
+
+## JS10F abrupt conversion and native errors (2026-08-29)
+
+Thrown completions from valueOf/toString, property-key conversion, accessors and
+native callback re-entry now dispatch through catch/finally instead of becoming
+undefined, NaN or generic host failures. Native intrinsic validation failures
+become catchable TypeError objects; invalid Array lengths become RangeError,
+with deterministic initial stack text and identity preserved across rethrow.
+The corpus is 158/158. Source-position stack frames and a general VM-wide
+throwing error factory remain future work.
