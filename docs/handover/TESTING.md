@@ -64,3 +64,5 @@ shadowing, constructor return selection and non-constructor errors.
 JS0 establishes `make test` and `make test-sanitize`. The external runner accepts
 an explicit candidate and permits an empty corpus only during the scaffold
 checkpoint; JS1 removes that exception when lifecycle cases exist.
+JS8D expands the independent corpus to 74/74 with parser, local/cross-frame,
+nested/rethrow, lexical binding, object value, return and malformed-form cases.

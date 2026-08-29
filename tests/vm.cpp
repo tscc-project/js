@@ -26,6 +26,11 @@ int main(){
  check(number(r,"function Answer(n){this.value=n;}Answer.prototype.read=function(){return this.value;};const a=new Answer(42);a.read();")==42,"constructor prototype result");
  check(number(r,"let x=1;{let x=2;}x;")==1,"block scope result");
  js_value*thrown=nullptr;check(js_eval(r,"function fail(){throw 42;}fail();",&thrown)==JS_STATUS_RUNTIME_ERROR,"throw did not propagate");check(std::string(js_runtime_last_error(r))=="uncaught exception: 42","throw diagnostic");
+ check(number(r,"try{throw 41;}catch(error){error+1;}")==42,"catch binding result");
+ check(number(r,"function fail(){throw 40;}try{fail();}catch(error){error+2;}")==42,"cross-frame catch result");
+ check(number(r,"try{try{throw 40;}catch(inner){throw inner+1;}}catch(outer){outer+1;}")==42,"nearest nested catch result");
+ check(number(r,"function answer(){try{throw 1;}catch(error){return error+41;}}answer();")==42,"return from catch result");
+ check(number(r,"try{throw 1;}catch{40+2;}")==42,"optional catch binding result");
  check(js_eval(r,"const fixed=1;fixed=2;",&v)==JS_STATUS_RUNTIME_ERROR,"const assignment accepted");check(js_eval(r,"missing+1",&v)==JS_STATUS_RUNTIME_ERROR,"missing identifier accepted");check(js_eval(r,"1+true",&v)==JS_STATUS_RUNTIME_ERROR,"mixed arithmetic accepted");check(js_eval(r,"let x=1;let x=2;",&v)==JS_STATUS_SYNTAX_ERROR,"duplicate binding accepted");
  js_runtime_free(r);std::cout<<"JS++ functions/closures VM passed\n";
 }

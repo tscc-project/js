@@ -10,11 +10,12 @@ struct Token { TokenKind kind=TokenKind::End;std::string text;std::size_t offset
 struct Statement;
 enum class ExprKind { Number,String,Boolean,Null,Undefined,Identifier,This,Unary,Binary,Assignment,Conditional,Function,Call,New,Object,Array,Property };
 struct Expr { ExprKind kind=ExprKind::Undefined;std::string text;double number=0;bool computed=false;std::unique_ptr<Expr>left,right,third;std::vector<std::unique_ptr<Expr>>arguments;std::vector<std::string>keys;std::vector<std::string>parameters;std::unique_ptr<Statement>function_body; };
-enum class StatementKind { Declaration,Expression,Block,If,While,For,Break,Continue,Return,Throw,FunctionDeclaration,Empty };
+enum class StatementKind { Declaration,Expression,Block,If,While,For,Break,Continue,Return,Throw,Try,FunctionDeclaration,Empty };
 struct Statement {
  StatementKind kind=StatementKind::Expression;bool constant=false;std::string name;
  std::unique_ptr<Expr>expression,condition,update;
- std::unique_ptr<Statement>initializer,then_branch,else_branch;
+ std::unique_ptr<Statement>initializer,then_branch,else_branch,try_branch,catch_branch;
+ std::string catch_name;
  std::vector<Statement>body;
 };
 struct Program { std::vector<Statement> statements; };

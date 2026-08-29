@@ -199,3 +199,11 @@ lexical environments and stack state, roots the pending thrown value by moving
 it onto the handler stack, and accepts throws propagated from calls, methods and
 constructors. Focused tests cover local/cross-frame dispatch and malformed
 metadata. No `try` surface syntax is accepted yet.
+## JS8D try/catch (2026-08-30)
+
+`try`/`catch` is now source-facing. Catch bindings are optional and lexical;
+the compiler emits protected regions and handler prologues, while the VM routes
+local and cross-frame thrown values to the smallest containing region. Nested
+catches, rethrows, normal fallthrough, object throws and returns from catch are
+covered. `finally` remains deliberately rejected until pending completion of
+return/break/continue can be intercepted and resumed correctly.

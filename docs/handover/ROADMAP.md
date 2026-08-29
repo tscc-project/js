@@ -66,3 +66,5 @@ independently of runtime-error formatting. Handler regions follow in CP25.
 CP25/JS8C establishes protected bytecode regions, validated handler targets and
 scope/stack unwinding, including cross-frame throws. Surface handlers remain a
 post-gate decision.
+JS8D implements surface `try`/`catch`, optional lexical catch bindings and
+nearest-region dispatch. `finally` remains a separate pending-completion slice.
