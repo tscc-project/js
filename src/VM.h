@@ -2,6 +2,7 @@
 #include "Bytecode.h"
 #include "Runtime.h"
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -9,7 +10,10 @@
 namespace jspp {
 struct Binding { js_value value;bool constant=false; };
 struct Environment { std::unordered_map<std::string,Binding>bindings;std::shared_ptr<Environment>parent; };
-struct FunctionObject { std::shared_ptr<FunctionPrototype>prototype;std::shared_ptr<Environment>closure;std::unordered_map<std::string,js_value>properties;std::shared_ptr<ObjectValue>instance_prototype; };
+class Heap;
+using NativeInvoke=std::function<bool(const js_value&,const std::vector<js_value>&,const js_value&,bool,js_value&)>;
+using NativeFunction=std::function<bool(const std::vector<js_value>&,const js_value&,bool,js_value&,std::string&,Heap&,const NativeInvoke&)>;
+struct FunctionObject { std::shared_ptr<FunctionPrototype>prototype;std::shared_ptr<Environment>closure;std::unordered_map<std::string,js_value>properties;std::shared_ptr<ObjectValue>instance_prototype;std::shared_ptr<ObjectValue>object_prototype;NativeFunction native;std::string name;std::size_t length=0;bool constructible=true; };
 struct ObjectValue { std::unordered_map<std::string,js_value>properties;std::shared_ptr<ObjectValue>prototype; };
 struct ArrayValue { std::vector<js_value>elements;std::unordered_map<std::string,js_value>properties;std::shared_ptr<ObjectValue>prototype; };
 class Heap {
@@ -27,6 +31,6 @@ private:
 };
 enum class CompletionKind { Normal,Return,Throw,Break,Continue };
 struct Completion { CompletionKind kind=CompletionKind::Normal;js_value value;std::size_t target=0,target_scope=0; };
-bool execute_completion(const Bytecode&,Completion&,std::string&error,std::size_t instruction_budget=1000000,Heap*heap=nullptr);
-bool execute(const Bytecode&,js_value&,std::string&error,std::size_t instruction_budget=1000000,Heap*heap=nullptr);
+bool execute_completion(const Bytecode&,Completion&,std::string&error,std::size_t instruction_budget=1000000,Heap*heap=nullptr,std::shared_ptr<Environment>global={});
+bool execute(const Bytecode&,js_value&,std::string&error,std::size_t instruction_budget=1000000,Heap*heap=nullptr,std::shared_ptr<Environment>global={});
 }

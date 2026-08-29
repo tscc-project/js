@@ -77,3 +77,6 @@ The independent corpus is 86/86.
 JS9A centralizes primitive conversion, equality, ordering and property-key
 semantics and migrates existing opcodes onto them. The corpus is 98/98;
 user-defined object conversion hooks remain coupled to JS10 infrastructure.
+JS10A establishes a runtime-owned intrinsic environment, rooted constructor and
+prototype identity, and native call/construct callbacks using ordinary VM paths.
+The corpus is 102/102; built-in families should now grow only through this layer.

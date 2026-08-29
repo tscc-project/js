@@ -229,3 +229,11 @@ traces and native exception APIs remain later work.
 ToPropertyKey, array-index recognition, strict/abstract equality and relational
 comparison. Unary/arithmetic/addition/comparison/property opcodes use that shared
 layer. The corpus is 98/98. User-defined conversion hooks await JS10.
+
+## JS10A intrinsic/native framework (2026-08-30)
+
+Each runtime now owns one persistent intrinsic environment rooted through GC.
+Native functions share normal call/construct bytecode paths, carry `name`,
+`length`, constructibility and prototype links, and may re-enter the common
+invoker. `Object` is the first constructor proving call and construction paths.
+The corpus is 102/102. Broader Object/Function/Error behavior follows in JS10B.
