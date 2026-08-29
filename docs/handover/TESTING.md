@@ -52,6 +52,11 @@ return, shared captured mutation, expression/block arrows, block shadowing and
 non-callable errors. Focused VM tests preserve these alongside prior control-flow
 and primitive evidence.
 
+JS6A expands the independent corpus to 46/46. Ten cases cover syntax, object and
+array reads/writes, named/computed keys, shorthand, nesting, holes/length,
+reference aliasing and invalid primitive bases. Prototype and receiver evidence
+must remain in the separate JS6B family.
+
 JS0 establishes `make test` and `make test-sanitize`. The external runner accepts
 an explicit candidate and permits an empty corpus only during the scaffold
 checkpoint; JS1 removes that exception when lifecycle cases exist.

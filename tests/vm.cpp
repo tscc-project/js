@@ -13,6 +13,11 @@ int main(){
  check(number(r,"function outer(x){return function(y){x=x+1;return x+y;};}const f=outer(39);f(1);f(1);")==42,"closure capture result");
  check(number(r,"function fact(n){if(n<=1)return 1;return n*fact(n-1);}fact(6);")==720,"recursive result");
  check(number(r,"const add=(a,b)=>a+b;add(20,22);")==42,"arrow result");
+ check(number(r,"const o={answer:40};o.answer=o.answer+2;o['answer'];")==42,"object property result");
+ check(number(r,"const a=[10,20];a[2]=12;a[0]+a[1]+a[2];")==42,"array property result");
+ check(number(r,"const a={x:1};const b=a;b.x=42;a.x;")==42,"object aliasing result");
+ check(number(r,"const x=42;({x}).x;")==42,"object shorthand result");
+ check(number(r,"[1,,3].length;")==3,"array hole length result");
  check(number(r,"let x=1;{let x=2;}x;")==1,"block scope result");
  check(js_eval(r,"const fixed=1;fixed=2;",&v)==JS_STATUS_RUNTIME_ERROR,"const assignment accepted");check(js_eval(r,"missing+1",&v)==JS_STATUS_RUNTIME_ERROR,"missing identifier accepted");check(js_eval(r,"1+true",&v)==JS_STATUS_RUNTIME_ERROR,"mixed arithmetic accepted");check(js_eval(r,"let x=1;let x=2;",&v)==JS_STATUS_SYNTAX_ERROR,"duplicate binding accepted");
  js_runtime_free(r);std::cout<<"JS++ functions/closures VM passed\n";

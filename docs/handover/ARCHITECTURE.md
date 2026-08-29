@@ -75,3 +75,13 @@ captured mutable bindings. Return is explicit bytecode and unwinds active block
 scopes. The instruction budget is shared across recursive calls, with a separate
 512-frame limit. Shared-pointer ownership is an interim pre-GC model and cycles
 remain a JS7 collector concern.
+
+## JS6A core objects and arrays
+
+Object values own string-keyed property maps; arrays own indexed elements plus
+named properties. Both are reference values, so assignment preserves aliasing
+and strict equality uses identity. Dedicated bytecode constructs literals and
+performs reads/writes without repeating base or key evaluation. Missing
+properties produce `undefined`; invalid primitive bases are contained runtime
+errors. Prototype links exist only as reserved internal representation until
+JS6B defines traversal, receiver binding and construction semantics.

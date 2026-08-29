@@ -5,8 +5,8 @@
 #include <thread>
 #include <unordered_set>
 
-namespace jspp { struct FunctionObject; }
-struct js_value { js_value_kind kind=JS_VALUE_UNDEFINED; bool boolean=false; double number=0; std::string string; std::shared_ptr<jspp::FunctionObject> function; };
+namespace jspp { struct FunctionObject;struct ObjectValue;struct ArrayValue; }
+struct js_value { js_value_kind kind=JS_VALUE_UNDEFINED; bool boolean=false; double number=0; std::string string; std::shared_ptr<jspp::FunctionObject> function;std::shared_ptr<jspp::ObjectValue> object;std::shared_ptr<jspp::ArrayValue> array; };
 struct js_runtime {
  std::thread::id owner=std::this_thread::get_id();
  std::string error;

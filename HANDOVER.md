@@ -91,6 +91,12 @@ Function values are identifiable through `js_value_kind`, but native calls and
 public invocation handles remain JS10 work. Shared ownership is provisional
 until JS7 replaces it with traced engine-managed lifetime.
 
+JS6A adds core object and array values, literals, named/computed property reads
+and writes, shorthand properties, array holes/length and reference aliasing.
+Property bytecode evaluates the base and key once and assignments leave the
+assigned value as their completion. Descriptors, methods, `this`, prototype
+traversal and `new` are deliberately reserved for JS6B.
+
 Coordination update: tscc CP4/TC2 now uses one production `ProgramGraph`. It does
 not link or invoke JS++, and the test-only-first boundary is unchanged.
 
