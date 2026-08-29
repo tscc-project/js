@@ -40,6 +40,12 @@ runtime/error cases and one separately compiled C embedding case. Focused tests
 inspect bytecode shape and primitive handle extraction; sanitizer runs pressure
 runtime creation, frontend failure/recovery and VM execution.
 
+JS4 expands the independent corpus to 26/26. Nine control-flow cases cover
+branching, while/for loops, break/continue, assignment results, const errors,
+short-circuit side effects and deterministic termination of an infinite loop.
+Focused AST and VM tests additionally inspect jump-bearing bytecode and nested
+control-flow completion.
+
 JS0 establishes `make test` and `make test-sanitize`. The external runner accepts
 an explicit candidate and permits an empty corpus only during the scaffold
 checkpoint; JS1 removes that exception when lifecycle cases exist.

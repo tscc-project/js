@@ -54,3 +54,13 @@ Values are understandable tagged C++ objects; there is no GC because this slice
 has no heap object graph. Arithmetic rejects unsupported mixed coercions rather
 than silently diverging. `js_eval`, the CLI and focused bytecode tests all consume
 the same parser/compiler/VM path.
+
+## JS4 control-flow slice
+
+The AST makes blocks, branches, loops and abrupt loop control explicit. The
+bytecode compiler resolves jumps and short-circuit/conditional branches while
+preserving expression results. Assignment keeps its value on the stack and the
+VM distinguishes mutable bindings from constants. Every evaluation has a fixed
+one-million-instruction budget so an infinite loop returns a contained runtime
+error. Full lexical environment chains and block-local binding scope are JS5
+work; this limitation is deliberate and externally documented.

@@ -14,8 +14,10 @@ later ordering changes when runtime and conformance evidence justifies it.
 4. **JS3 - primitive VM — completed 2026-08-30:** inspectable stack bytecode,
    primitive values, initialized bindings, arithmetic, equality/order, unary
    operations, completion values, CLI execution and C embedding results.
-5. **JS4 - control flow:** blocks, conditions, loops, short-circuiting,
-   break/continue, and evaluation-order evidence.
+5. **JS4 - control flow — completed 2026-08-30:** blocks, conditions, classic
+   loops, short-circuiting, assignment, conditional expressions,
+   break/continue, evaluation-order evidence, const enforcement and a bounded
+   instruction budget.
 6. **JS5 - functions:** calls, parameters, return, recursion, environments,
    closures, then arrows.
 7. **JS6 - objects:** arrays, properties/descriptors, computed access, methods,

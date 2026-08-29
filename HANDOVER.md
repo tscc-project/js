@@ -77,8 +77,11 @@ parentheses, unary operations, arithmetic, equality and ordering. `js --check`
 is the external parse contract. JS3 lowers exactly this grammar to inspectable
 stack bytecode and executes number, string, boolean, null and undefined values,
 bindings, numeric arithmetic, same-type string concatenation, equality, ordering
-and unary operations. Control flow, assignment, coercive mixed arithmetic, calls,
-objects and templates remain explicitly unsupported.
+and unary operations. JS4 adds blocks, if/else, while and classic for loops,
+break/continue, assignment, short-circuit logical operators, conditional
+expressions and a one-million-instruction evaluation budget. Const assignment is
+rejected. Lexical block environments begin with JS5; calls, objects, coercive
+mixed arithmetic and templates remain explicitly unsupported.
 
 Coordination update: tscc CP4/TC2 now uses one production `ProgramGraph`. It does
 not link or invoke JS++, and the test-only-first boundary is unchanged.
