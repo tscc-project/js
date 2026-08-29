@@ -26,7 +26,7 @@ private:
  std::vector<std::weak_ptr<ArrayValue>>arrays_;
 };
 enum class CompletionKind { Normal,Return,Throw,Break,Continue };
-struct Completion { CompletionKind kind=CompletionKind::Normal;js_value value;std::size_t target=0; };
+struct Completion { CompletionKind kind=CompletionKind::Normal;js_value value;std::size_t target=0,target_scope=0; };
 bool execute_completion(const Bytecode&,Completion&,std::string&error,std::size_t instruction_budget=1000000,Heap*heap=nullptr);
 bool execute(const Bytecode&,js_value&,std::string&error,std::size_t instruction_budget=1000000,Heap*heap=nullptr);
 }

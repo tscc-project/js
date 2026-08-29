@@ -214,3 +214,11 @@ Bytecode now owns cleanup regions and `completion.resume`. The VM suspends
 throws and returns across cleanup code, reconstructs lexical/operand state,
 resumes exactly once, and permits a cleanup return/throw to replace the pending
 completion. Surface `finally` remains disabled; the corpus stays 74/74.
+
+## CP29 / JS8F finally (2026-08-30)
+
+`try/finally` and `try/catch/finally` now run through cleanup regions for normal,
+return, throw, break and continue completions. Cleanup executes once, nested and
+cross-frame paths are retained, and a return/throw from `finally` replaces the
+pending completion. The independent corpus is 86/86. Exception objects, stack
+traces and native exception APIs remain later work.

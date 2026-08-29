@@ -66,3 +66,5 @@ an explicit candidate and permits an empty corpus only during the scaffold
 checkpoint; JS1 removes that exception when lifecycle cases exist.
 JS8D expands the independent corpus to 74/74 with parser, local/cross-frame,
 nested/rethrow, lexical binding, object value, return and malformed-form cases.
+JS8F expands the corpus to 86/86 with normal, return, throw, break, continue,
+nested, cross-frame and completion-replacement `finally` paths.

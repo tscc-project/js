@@ -71,3 +71,6 @@ nearest-region dispatch. `finally` remains a separate pending-completion slice.
 CP27/JS8E establishes cleanup regions and resumable pending completions before
 surface `finally`. Focused VM tests cover retained throws, replacement and
 malformed orphan resumes; the public corpus remains 74/74.
+CP29/JS8F enables `finally` over normal, return, throw, break and continue paths,
+including nested cleanup, catch/finally, cross-frame throws and replacement.
+The independent corpus is 86/86.

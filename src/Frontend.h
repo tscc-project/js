@@ -14,7 +14,7 @@ enum class StatementKind { Declaration,Expression,Block,If,While,For,Break,Conti
 struct Statement {
  StatementKind kind=StatementKind::Expression;bool constant=false;std::string name;
  std::unique_ptr<Expr>expression,condition,update;
- std::unique_ptr<Statement>initializer,then_branch,else_branch,try_branch,catch_branch;
+ std::unique_ptr<Statement>initializer,then_branch,else_branch,try_branch,catch_branch,finally_branch;
  std::string catch_name;
  std::vector<Statement>body;
 };
