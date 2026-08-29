@@ -257,3 +257,12 @@ provide a bounded reflection surface, and `instanceof` walks object, array and
 function prototype chains through its own opcode. Cyclic prototype mutation and
 invalid/non-callable operands fail deterministically. The corpus is 124/124.
 Accessors, primitive boxing and complete descriptor invariants remain deferred.
+
+## JS10D Array and String foundations (2026-08-29)
+
+Array literals and constructed arrays share `Array.prototype`; the constructor,
+`isArray`, push/pop/join/slice/indexOf/map all use the native invoker and heap.
+Primitive strings expose length, indexed characters and String prototype
+slice/includes/indexOf, while `String(value)` uses centralized conversion. The
+corpus is 138/138. Sparse-array semantics, iterators, callbacks beyond map,
+Unicode indexing and boxed String objects remain deferred.

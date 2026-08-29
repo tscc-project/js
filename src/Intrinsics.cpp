@@ -1,6 +1,7 @@
 #include "Intrinsics.h"
 #include "Conversion.h"
 #include <algorithm>
+#include <cmath>
 
 namespace jspp {
 namespace {
@@ -89,6 +90,35 @@ IntrinsicSet create_intrinsics(Heap&heap){
             out=make_native(heap,"anonymous",0,true,[](const std::vector<js_value>&,const js_value&,bool,js_value&result,std::string&,Heap&,const NativeInvoke&){result={};return true;},function_prototype,object_prototype);return true;
         },set.function_prototype,set.function_prototype);
 
+    auto array_prototype=heap.object();array_prototype->prototype=set.object_prototype;
+    auto array=make_native(heap,"Array",1,true,
+        [array_prototype](const std::vector<js_value>&args,const js_value&,bool,js_value&out,std::string&error,Heap&heap,const NativeInvoke&){out.kind=JS_VALUE_ARRAY;out.array=heap.array();out.array->prototype=array_prototype;if(args.size()==1&&args[0].kind==JS_VALUE_NUMBER){if(args[0].number<0||std::floor(args[0].number)!=args[0].number){error="invalid array length";return false;}out.array->elements.resize(static_cast<std::size_t>(args[0].number));}else out.array->elements=args;return true;},
+        set.function_prototype,array_prototype);
+    array.function->properties["isArray"]=make_native(heap,"isArray",1,false,
+        [](const std::vector<js_value>&args,const js_value&,bool,js_value&out,std::string&,Heap&,const NativeInvoke&){out.kind=JS_VALUE_BOOLEAN;out.boolean=!args.empty()&&args[0].kind==JS_VALUE_ARRAY;return true;},set.function_prototype,set.object_prototype);
+    array_prototype->properties["push"]=make_native(heap,"push",1,false,
+        [](const std::vector<js_value>&args,const js_value&receiver,bool,js_value&out,std::string&error,Heap&,const NativeInvoke&){if(receiver.kind!=JS_VALUE_ARRAY){error="Array.prototype.push receiver is not an array";return false;}receiver.array->elements.insert(receiver.array->elements.end(),args.begin(),args.end());out=number_value(receiver.array->elements.size());return true;},set.function_prototype,set.object_prototype);
+    array_prototype->properties["pop"]=make_native(heap,"pop",0,false,
+        [](const std::vector<js_value>&,const js_value&receiver,bool,js_value&out,std::string&error,Heap&,const NativeInvoke&){if(receiver.kind!=JS_VALUE_ARRAY){error="Array.prototype.pop receiver is not an array";return false;}if(receiver.array->elements.empty()){out={};return true;}out=receiver.array->elements.back();receiver.array->elements.pop_back();return true;},set.function_prototype,set.object_prototype);
+    array_prototype->properties["join"]=make_native(heap,"join",1,false,
+        [](const std::vector<js_value>&args,const js_value&receiver,bool,js_value&out,std::string&error,Heap&,const NativeInvoke&){if(receiver.kind!=JS_VALUE_ARRAY){error="Array.prototype.join receiver is not an array";return false;}const auto separator=args.empty()?std::string(","):to_string(args[0]);std::string text;for(std::size_t i=0;i<receiver.array->elements.size();++i){if(i)text+=separator;const auto&value=receiver.array->elements[i];if(value.kind!=JS_VALUE_UNDEFINED&&value.kind!=JS_VALUE_NULL)text+=to_string(value);}out=string_value(std::move(text));return true;},set.function_prototype,set.object_prototype);
+    array_prototype->properties["indexOf"]=make_native(heap,"indexOf",1,false,
+        [](const std::vector<js_value>&args,const js_value&receiver,bool,js_value&out,std::string&error,Heap&,const NativeInvoke&){if(receiver.kind!=JS_VALUE_ARRAY){error="Array.prototype.indexOf receiver is not an array";return false;}std::size_t found=receiver.array->elements.size();if(!args.empty())for(std::size_t i=0;i<receiver.array->elements.size();++i)if(strict_equal(receiver.array->elements[i],args[0])){found=i;break;}out=number_value(found==receiver.array->elements.size()?-1.0:static_cast<double>(found));return true;},set.function_prototype,set.object_prototype);
+    array_prototype->properties["slice"]=make_native(heap,"slice",2,false,
+        [array_prototype](const std::vector<js_value>&args,const js_value&receiver,bool,js_value&out,std::string&error,Heap&heap,const NativeInvoke&){if(receiver.kind!=JS_VALUE_ARRAY){error="Array.prototype.slice receiver is not an array";return false;}const auto size=static_cast<double>(receiver.array->elements.size());auto index=[&](std::size_t n,double fallback){double value=fallback;if(n<args.size()&&!to_number(args[n],value))value=fallback;if(value<0)value=std::max(0.0,size+value);return static_cast<std::size_t>(std::min(size,std::max(0.0,std::floor(value))));};auto begin=index(0,0),end=index(1,size);if(end<begin)end=begin;out.kind=JS_VALUE_ARRAY;out.array=heap.array();out.array->prototype=array_prototype;out.array->elements.assign(receiver.array->elements.begin()+begin,receiver.array->elements.begin()+end);return true;},set.function_prototype,set.object_prototype);
+    array_prototype->properties["map"]=make_native(heap,"map",1,false,
+        [array_prototype](const std::vector<js_value>&args,const js_value&receiver,bool,js_value&out,std::string&error,Heap&heap,const NativeInvoke&invoke){if(receiver.kind!=JS_VALUE_ARRAY){error="Array.prototype.map receiver is not an array";return false;}if(args.empty()||args[0].kind!=JS_VALUE_FUNCTION){error="Array.prototype.map callback is not callable";return false;}out.kind=JS_VALUE_ARRAY;out.array=heap.array();out.array->prototype=array_prototype;for(std::size_t i=0;i<receiver.array->elements.size();++i){js_value mapped;if(!invoke(args[0],{receiver.array->elements[i],number_value(i),receiver},{},false,mapped))return false;out.array->elements.push_back(std::move(mapped));}return true;},set.function_prototype,set.object_prototype);
+
+    auto string_prototype=heap.object();string_prototype->prototype=set.object_prototype;
+    auto string=make_native(heap,"String",1,true,
+        [](const std::vector<js_value>&args,const js_value&,bool,js_value&out,std::string&,Heap&,const NativeInvoke&){out=string_value(args.empty()?std::string{}:to_string(args[0]));return true;},set.function_prototype,string_prototype);
+    string_prototype->properties["slice"]=make_native(heap,"slice",2,false,
+        [](const std::vector<js_value>&args,const js_value&receiver,bool,js_value&out,std::string&error,Heap&,const NativeInvoke&){if(receiver.kind!=JS_VALUE_STRING){error="String.prototype.slice receiver is not a string";return false;}const auto size=static_cast<double>(receiver.string.size());auto index=[&](std::size_t n,double fallback){double value=fallback;if(n<args.size()&&!to_number(args[n],value))value=fallback;if(value<0)value=std::max(0.0,size+value);return static_cast<std::size_t>(std::min(size,std::max(0.0,std::floor(value))));};auto begin=index(0,0),end=index(1,size);if(end<begin)end=begin;out=string_value(receiver.string.substr(begin,end-begin));return true;},set.function_prototype,set.object_prototype);
+    string_prototype->properties["includes"]=make_native(heap,"includes",1,false,
+        [](const std::vector<js_value>&args,const js_value&receiver,bool,js_value&out,std::string&error,Heap&,const NativeInvoke&){if(receiver.kind!=JS_VALUE_STRING){error="String.prototype.includes receiver is not a string";return false;}out.kind=JS_VALUE_BOOLEAN;out.boolean=receiver.string.find(args.empty()?std::string("undefined"):to_string(args[0]))!=std::string::npos;return true;},set.function_prototype,set.object_prototype);
+    string_prototype->properties["indexOf"]=make_native(heap,"indexOf",1,false,
+        [](const std::vector<js_value>&args,const js_value&receiver,bool,js_value&out,std::string&error,Heap&,const NativeInvoke&){if(receiver.kind!=JS_VALUE_STRING){error="String.prototype.indexOf receiver is not a string";return false;}const auto found=receiver.string.find(args.empty()?std::string("undefined"):to_string(args[0]));out=number_value(found==std::string::npos?-1.0:static_cast<double>(found));return true;},set.function_prototype,set.object_prototype);
+
     auto make_error=[&](const std::string&name,const std::shared_ptr<ObjectValue>&prototype){
         return make_native(heap,name,1,true,[name,prototype](const std::vector<js_value>&args,const js_value&receiver,bool construct,js_value&out,std::string&,Heap&heap,const NativeInvoke&){
             if(construct&&receiver.kind==JS_VALUE_OBJECT)out=receiver;else{out.kind=JS_VALUE_OBJECT;out.object=heap.object();out.object->prototype=prototype;}
@@ -100,7 +130,7 @@ IntrinsicSet create_intrinsics(Heap&heap){
     auto range_error_prototype=heap.object();range_error_prototype->prototype=error_prototype;range_error_prototype->properties["name"]=string_value("RangeError");
     auto error=make_error("Error",error_prototype),type_error=make_error("TypeError",type_error_prototype),range_error=make_error("RangeError",range_error_prototype);
 
-    for(auto entry:std::vector<std::pair<std::string,js_value>>{{"Object",object},{"Function",function},{"Error",error},{"TypeError",type_error},{"RangeError",range_error}}){set.global->bindings[entry.first]={entry.second,true};set.roots.push_back(entry.second);}
+    for(auto entry:std::vector<std::pair<std::string,js_value>>{{"Object",object},{"Function",function},{"Array",array},{"String",string},{"Error",error},{"TypeError",type_error},{"RangeError",range_error}}){set.global->bindings[entry.first]={entry.second,true};set.roots.push_back(entry.second);}
     return set;
 }
 }
