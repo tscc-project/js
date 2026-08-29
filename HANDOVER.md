@@ -121,9 +121,11 @@ and licensing/provenance.
 
 ## tscc integration
 
-The first integration is test-only: the tscc regression harness will eventually
-run eligible emitted JavaScript in both Node and JS++. Node remains the initial
-compatibility oracle. JS++ gaps must not be mislabeled as tscc failures.
+The first integration is test-only and is now implemented at CP9/INT0: the tscc
+regression harness runs six eligible emitted programs independently in Node and
+JS++. Explicit expected completion values prevent equal-but-wrong agreement.
+Node remains the initial compatibility oracle, and JS++ gaps must not be
+mislabeled as normal tscc failures.
 
 No existing tscc implementation moves here initially. A public syntax facility is
 considered only after both parsers exist and comparative evidence proves a stable
