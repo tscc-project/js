@@ -32,7 +32,9 @@ later ordering changes when runtime and conformance evidence justifies it.
    graph tracing, cycle reclamation, allocation pressure and teardown.
 11. **JS7C - execution safe points — completed 2026-08-30:** allocation
    thresholds, active stack/environment roots, compaction and re-entry guards.
-9. **JS8 - exceptions:** throw/try/catch/finally, completion interaction, native
+12. **JS8A - explicit throw — completed 2026-08-30:** parser, bytecode,
+    scope-unwind and call propagation for uncaught primitive throws.
+13. **JS8B - handlers:** try/catch/finally, completion interaction, native
    propagation, reporting, and stacks.
 10. **JS9 - conversions/built-ins:** centralized coercions and foundational
     Object, Array, String, Number, Boolean, Math, JSON, and Error families.

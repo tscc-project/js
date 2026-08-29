@@ -179,3 +179,9 @@ Run `python3 tools/check_feature_matrix.py` whenever checkpoint status changes.
 
 These are living infrastructure. Consolidate durable decisions rather than
 appending an unstructured diary.
+## JS8A / CP21 explicit throw (2026-08-30)
+
+Explicit `throw` now has parser and bytecode identity, unwinds lexical scopes,
+propagates through calls and surfaces uncaught primitive values as deterministic
+runtime errors. `try`/`catch`/`finally`, exception objects and native exception
+APIs remain future work. The independent corpus is 62/62.
