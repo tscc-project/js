@@ -9,7 +9,8 @@ FRONTEND_OBJECT := $(BUILD)/Frontend.o
 BYTECODE_OBJECT := $(BUILD)/Bytecode.o
 VM_OBJECT := $(BUILD)/VM.o
 HEAP_OBJECT := $(BUILD)/Heap.o
-LIB_OBJECTS := $(OBJECT) $(FRONTEND_OBJECT) $(BYTECODE_OBJECT) $(VM_OBJECT) $(HEAP_OBJECT)
+CONVERSION_OBJECT := $(BUILD)/Conversion.o
+LIB_OBJECTS := $(OBJECT) $(FRONTEND_OBJECT) $(BYTECODE_OBJECT) $(VM_OBJECT) $(HEAP_OBJECT) $(CONVERSION_OBJECT)
 CLI := $(BUILD)/js
 STATIC := $(BUILD)/libjs.a
 SHARED := $(BUILD)/libjs.so
@@ -24,9 +25,11 @@ $(FRONTEND_OBJECT): src/Frontend.cpp src/Frontend.h | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
 $(BYTECODE_OBJECT): src/Bytecode.cpp src/Bytecode.h src/Frontend.h | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
-$(VM_OBJECT): src/VM.cpp src/VM.h src/Bytecode.h src/Runtime.h | $(BUILD)
+$(VM_OBJECT): src/VM.cpp src/VM.h src/Bytecode.h src/Runtime.h src/Conversion.h | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
 $(HEAP_OBJECT): src/Heap.cpp src/VM.h src/Runtime.h | $(BUILD)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
+$(CONVERSION_OBJECT): src/Conversion.cpp src/Conversion.h src/Runtime.h src/VM.h | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
 $(STATIC): $(LIB_OBJECTS)
 	$(AR) rcs $@ $^
@@ -54,9 +57,9 @@ test-regression: all
 test: test-unit test-regression
 test-sanitize:
 	mkdir -p $(BUILD)/san
-	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/lifecycle.cpp src/Runtime.cpp src/Frontend.cpp src/Bytecode.cpp src/VM.cpp src/Heap.cpp -pthread -o $(BUILD)/san/lifecycle
+	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/lifecycle.cpp src/Runtime.cpp src/Frontend.cpp src/Bytecode.cpp src/VM.cpp src/Heap.cpp src/Conversion.cpp -pthread -o $(BUILD)/san/lifecycle
 	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/frontend.cpp src/Frontend.cpp -o $(BUILD)/san/frontend
-	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/vm.cpp src/Runtime.cpp src/Frontend.cpp src/Bytecode.cpp src/VM.cpp src/Heap.cpp -pthread -o $(BUILD)/san/vm
+	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/vm.cpp src/Runtime.cpp src/Frontend.cpp src/Bytecode.cpp src/VM.cpp src/Heap.cpp src/Conversion.cpp -pthread -o $(BUILD)/san/vm
 	ASAN_OPTIONS="$${ASAN_OPTIONS:-detect_leaks=1:halt_on_error=1}" UBSAN_OPTIONS=halt_on_error=1 ./$(BUILD)/san/lifecycle
 	ASAN_OPTIONS="$${ASAN_OPTIONS:-detect_leaks=1:halt_on_error=1}" UBSAN_OPTIONS=halt_on_error=1 ./$(BUILD)/san/frontend
 	ASAN_OPTIONS="$${ASAN_OPTIONS:-detect_leaks=1:halt_on_error=1}" UBSAN_OPTIONS=halt_on_error=1 ./$(BUILD)/san/vm

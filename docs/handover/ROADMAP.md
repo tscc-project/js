@@ -74,3 +74,6 @@ malformed orphan resumes; the public corpus remains 74/74.
 CP29/JS8F enables `finally` over normal, return, throw, break and continue paths,
 including nested cleanup, catch/finally, cross-frame throws and replacement.
 The independent corpus is 86/86.
+JS9A centralizes primitive conversion, equality, ordering and property-key
+semantics and migrates existing opcodes onto them. The corpus is 98/98;
+user-defined object conversion hooks remain coupled to JS10 infrastructure.

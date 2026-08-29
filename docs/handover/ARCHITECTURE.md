@@ -94,3 +94,9 @@ binding. Function values own a mutable instance-prototype object. Construct
 creates a receiver linked to that object, invokes the function, and selects an
 explicit reference return or the receiver. Lookup walks live prototype links;
 writes remain own-property writes. This is a deliberately descriptor-free model.
+## Central conversions
+
+JS9A centralizes language conversion decisions in `Conversion`. VM opcodes no
+longer carry private truthiness, equality, numeric or property-key rules. The
+current ToPrimitive object fallback is deliberately bounded until native
+prototype methods and user-defined conversion hooks exist.

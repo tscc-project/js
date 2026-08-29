@@ -222,3 +222,10 @@ return, throw, break and continue completions. Cleanup executes once, nested and
 cross-frame paths are retained, and a return/throw from `finally` replaces the
 pending completion. The independent corpus is 86/86. Exception objects, stack
 traces and native exception APIs remain later work.
+
+## JS9A centralized conversions (2026-08-30)
+
+`Conversion` now owns ToBoolean, bounded ToPrimitive, ToNumber, ToString,
+ToPropertyKey, array-index recognition, strict/abstract equality and relational
+comparison. Unary/arithmetic/addition/comparison/property opcodes use that shared
+layer. The corpus is 98/98. User-defined conversion hooks await JS10.
