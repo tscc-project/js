@@ -4,6 +4,11 @@ This is the entry point for work on JS++, the independent embeddable JavaScript
 engine in this repository. The repository is intentionally at pre-implementation
 checkpoint JS0. Do not infer working engine behaviour from planned API examples.
 
+Coordinated status (2026-08-30): tscc CP3/TC1 now retains a durable per-file
+compilation unit through emission. This is compiler-internal ownership work; it
+moves nothing into JS++, creates no runtime dependency, and leaves test-only
+integration as the first planned relationship after a primitive engine exists.
+
 ## Identity and artifacts
 
 - Product/repository identity: JS++.

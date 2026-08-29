@@ -41,3 +41,8 @@ Integration begins after the primitive engine is useful: dual-runtime tscc tests
 independent parsing of tscc output, a shared emitted-JavaScript corpus, then a
 syntax-sharing decision gate. Production embedding in tscc remains optional and
 requires a concrete bounded feature.
+
+Compiler coordination status: tscc CP3/TC1 now retains a durable per-file
+compilation unit through emission. This changes no JS++ ownership or dependency:
+JS++ remains independent, and its first tscc role remains a test runtime after the
+primitive engine exists.
