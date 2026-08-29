@@ -237,3 +237,14 @@ Native functions share normal call/construct bytecode paths, carry `name`,
 `length`, constructibility and prototype links, and may re-enter the common
 invoker. `Object` is the first constructor proving call and construction paths.
 The corpus is 102/102. Broader Object/Function/Error behavior follows in JS10B.
+
+## JS10B Object, Function and Error foundations (2026-08-30)
+
+`Object.prototype` supplies native `valueOf`/`toString`; ordinary object literals
+inherit it. `Function.prototype.call` and bounded array-only `apply` re-enter the
+common invoker. `Error`, `TypeError` and `RangeError` create prototype-backed
+objects with name, message and deterministic initial stack text; catch/rethrow
+preserves identity and uncaught formatting recognizes errors. VM conversions now
+dispatch user `valueOf`/`toString` for numeric/string/property-key operations.
+The corpus is 114/114. Full descriptors, `instanceof`, dynamic Function source,
+complete stacks and exception-producing conversion hooks remain future work.

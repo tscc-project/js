@@ -80,3 +80,7 @@ user-defined object conversion hooks remain coupled to JS10 infrastructure.
 JS10A establishes a runtime-owned intrinsic environment, rooted constructor and
 prototype identity, and native call/construct callbacks using ordinary VM paths.
 The corpus is 102/102; built-in families should now grow only through this layer.
+JS10B validates that rule with Object/Function/Error prototypes, call/apply,
+error identity/reporting and user conversion hooks. The 114/114 result supports
+moving toward Array/String built-ins, but descriptors and complete stack frames
+remain prerequisites for broad compatibility claims.
