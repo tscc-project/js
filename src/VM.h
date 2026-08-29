@@ -12,5 +12,15 @@ struct Environment { std::unordered_map<std::string,Binding>bindings;std::shared
 struct FunctionObject { std::shared_ptr<FunctionPrototype>prototype;std::shared_ptr<Environment>closure;std::unordered_map<std::string,js_value>properties;std::shared_ptr<ObjectValue>instance_prototype; };
 struct ObjectValue { std::unordered_map<std::string,js_value>properties;std::shared_ptr<ObjectValue>prototype; };
 struct ArrayValue { std::vector<js_value>elements;std::unordered_map<std::string,js_value>properties;std::shared_ptr<ObjectValue>prototype; };
-bool execute(const Bytecode&,js_value&,std::string&error,std::size_t instruction_budget=1000000);
+class Heap {
+public:
+ std::shared_ptr<Environment>environment();std::shared_ptr<FunctionObject>function();
+ std::shared_ptr<ObjectValue>object();std::shared_ptr<ArrayValue>array();
+ std::size_t allocations()const{return allocations_;}std::size_t tracked()const;
+private:
+ std::size_t allocations_=0;std::vector<std::weak_ptr<Environment>>environments_;
+ std::vector<std::weak_ptr<FunctionObject>>functions_;std::vector<std::weak_ptr<ObjectValue>>objects_;
+ std::vector<std::weak_ptr<ArrayValue>>arrays_;
+};
+bool execute(const Bytecode&,js_value&,std::string&error,std::size_t instruction_budget=1000000,Heap*heap=nullptr);
 }

@@ -103,6 +103,11 @@ prototype lookup, constructors and JavaScript constructor-return selection.
 Descriptors/accessors, classes, built-in prototype families, `instanceof` and
 general member-expression constructor targets remain future work.
 
+JS7A establishes one engine-owned allocation registry for environments,
+functions, objects and arrays. Every VM allocation now passes through `Heap`,
+which owns allocation accounting and weak graph inventory while preserving the
+existing 56/56 behavior. Collection remains deliberately inactive until JS7B.
+
 Coordination update: tscc CP4/TC2 now uses one production `ProgramGraph`. It does
 not link or invoke JS++, and the test-only-first boundary is unchanged.
 

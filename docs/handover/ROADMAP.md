@@ -26,8 +26,10 @@ later ordering changes when runtime and conformance evidence justifies it.
 8. **JS6B - object model — completed 2026-08-30:** methods, receiver-bound
    calls, `this`, live prototype lookup, constructors and `new`; descriptors
    remain a later object-model refinement.
-8. **JS7 - GC:** tracing roots across VM/runtime/native handles, adversarial
-   allocation, sanitizers, teardown, and Valgrind.
+9. **JS7A - heap foundation — completed 2026-08-30:** engine-owned allocation,
+   graph inventory and accounting without collection policy.
+10. **JS7B - traced collection:** roots, cycle reclamation, adversarial
+   allocation, sanitizers and teardown.
 9. **JS8 - exceptions:** throw/try/catch/finally, completion interaction, native
    propagation, reporting, and stacks.
 10. **JS9 - conversions/built-ins:** centralized coercions and foundational
