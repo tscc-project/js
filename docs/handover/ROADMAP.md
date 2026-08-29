@@ -63,3 +63,6 @@ JS++ remains independent, and its first tscc role remains a test runtime after t
 primitive engine exists.
 CP23/JS8B establishes explicit completion records and preserves thrown values
 independently of runtime-error formatting. Handler regions follow in CP25.
+CP25/JS8C establishes protected bytecode regions, validated handler targets and
+scope/stack unwinding, including cross-frame throws. Surface handlers remain a
+post-gate decision.

@@ -191,3 +191,11 @@ The VM now carries explicit Normal, Return, Throw, Break and Continue completion
 kinds. Throws retain their `js_value` across function frames and only the public
 execution boundary formats an uncaught runtime error. Break/continue remain
 compiled jumps until handler/finally evidence requires interception.
+## JS8C / CP25 handler regions (2026-08-30)
+
+Bytecode can now describe protected instruction ranges with handler targets,
+scope depth and operand-stack depth. The VM selects the nearest region, unwinds
+lexical environments and stack state, roots the pending thrown value by moving
+it onto the handler stack, and accepts throws propagated from calls, methods and
+constructors. Focused tests cover local/cross-frame dispatch and malformed
+metadata. No `try` surface syntax is accepted yet.
