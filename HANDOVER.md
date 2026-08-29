@@ -1,8 +1,9 @@
 # JS++ development handover
 
 This is the entry point for work on JS++, the independent embeddable JavaScript
-engine in this repository. The repository is intentionally at pre-implementation
-checkpoint JS0. Do not infer working engine behaviour from planned API examples.
+engine in this repository. JS0 is complete: the C++17 build, CLI identity,
+sanitizer target and independent empty-corpus runner are executable. Evaluation
+and the public ABI remain JS1 work; do not infer engine behaviour from scaffolding.
 
 Coordinated status (2026-08-30): tscc CP3/TC1 now retains a durable per-file
 compilation unit through emission. This is compiler-internal ownership work; it

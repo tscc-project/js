@@ -3,8 +3,8 @@
 This roadmap is adaptive. JS0-JS3 are the first concrete implementation path;
 later ordering changes when runtime and conformance evidence justifies it.
 
-1. **JS0 - foundation:** C++17 layout, Make build, `include/js.h`, CLI/library
-   targets, unit tests, regression runner, handovers, and website.
+1. **JS0 - foundation — completed 2026-08-30:** C++17 layout, Make build, CLI
+   identity, sanitizer target, independent runner, handovers, and website.
 2. **JS1 - lifecycle:** opaque runtime/value types, creation/destruction,
    evaluation entry point, errors, versioning, allocator/lifetime/thread rules.
 3. **JS2 - frontend:** sources, diagnostics, lexer, executable parser, semicolon
