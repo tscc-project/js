@@ -68,3 +68,6 @@ scope/stack unwinding, including cross-frame throws. Surface handlers remain a
 post-gate decision.
 JS8D implements surface `try`/`catch`, optional lexical catch bindings and
 nearest-region dispatch. `finally` remains a separate pending-completion slice.
+CP27/JS8E establishes cleanup regions and resumable pending completions before
+surface `finally`. Focused VM tests cover retained throws, replacement and
+malformed orphan resumes; the public corpus remains 74/74.

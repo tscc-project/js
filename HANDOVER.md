@@ -207,3 +207,10 @@ local and cross-frame thrown values to the smallest containing region. Nested
 catches, rethrows, normal fallthrough, object throws and returns from catch are
 covered. `finally` remains deliberately rejected until pending completion of
 return/break/continue can be intercepted and resumed correctly.
+
+## CP27 / JS8E pending completions (2026-08-30)
+
+Bytecode now owns cleanup regions and `completion.resume`. The VM suspends
+throws and returns across cleanup code, reconstructs lexical/operand state,
+resumes exactly once, and permits a cleanup return/throw to replace the pending
+completion. Surface `finally` remains disabled; the corpus stays 74/74.
