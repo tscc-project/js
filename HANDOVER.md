@@ -71,6 +71,12 @@ the process C++ allocator for now; failures and C++ exceptions are contained.
 Native callbacks and re-entry do not exist yet. `js_eval` reports unsupported
 until JS3.
 
+JS2 adds attributed lexer diagnostics and an executable AST for primitive
+literals, identifiers, initialized declarations, expression statements,
+parentheses, unary operations, arithmetic, equality and ordering. `js --check`
+is the external parse contract. Control flow, calls, objects and templates remain
+explicitly unsupported.
+
 Coordination update: tscc CP4/TC2 now uses one production `ProgramGraph`. It does
 not link or invoke JS++, and the test-only-first boundary is unchanged.
 

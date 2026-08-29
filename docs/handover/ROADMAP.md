@@ -8,8 +8,9 @@ later ordering changes when runtime and conformance evidence justifies it.
 2. **JS1 - lifecycle — completed 2026-08-30:** opaque runtime/value types,
    creation/destruction, reserved evaluation entry point, runtime-owned errors,
    versioning and explicit allocator/lifetime/thread rules.
-3. **JS2 - frontend:** sources, diagnostics, lexer, executable parser, semicolon
-   rules, malformed recovery, and independent parse tests.
+3. **JS2 - frontend — completed 2026-08-30:** attributed sources/diagnostics,
+   bounded ECMAScript tokens, executable primitive/declaration syntax, explicit
+   semicolon/end rules and independent positive/negative parse tests.
 4. **JS3 - primitive VM:** inspectable bytecode and primitive values, variables,
    arithmetic, comparisons, and completion values.
 5. **JS4 - control flow:** blocks, conditions, loops, short-circuiting,
