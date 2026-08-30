@@ -48,4 +48,49 @@ inline std::vector<std::string> own_property_keys(const PropertyMaps& maps,
     std::sort(keys.begin(), keys.end());
     return keys;
 }
+
+inline bool named_property_get(const js_value& receiver, const std::string& name,
+                               const NativeInvoke& invoke, js_value& out) {
+    auto read = [&](const PropertyMaps& maps) {
+        js_value stored; PropertyAttributes flags;
+        if (!own_property(maps, name, stored, flags)) return false;
+        if (!flags.accessor) { out = stored; return true; }
+        if (flags.getter.kind != JS_VALUE_FUNCTION) { out = {}; return true; }
+        return invoke(flags.getter, {}, receiver, false, out);
+    };
+    if (read(own_property_maps(receiver))) return true;
+    std::shared_ptr<ObjectValue> prototype;
+    if (receiver.kind == JS_VALUE_OBJECT && receiver.object) prototype = receiver.object->prototype;
+    else if (receiver.kind == JS_VALUE_ARRAY && receiver.array) prototype = receiver.array->prototype;
+    else if (receiver.kind == JS_VALUE_FUNCTION && receiver.function) prototype = receiver.function->object_prototype;
+    for (auto at = prototype; at; at = at->prototype) {
+        js_value holder; holder.kind = JS_VALUE_OBJECT; holder.object = at;
+        if (read(own_property_maps(holder))) return true;
+    }
+    return false;
+}
+
+inline bool named_property_set(const js_value& receiver, const std::string& name,
+                               const js_value& value, const NativeInvoke& invoke,
+                               std::string& error) {
+    auto maps = own_property_maps(receiver);
+    if (!maps) return false;
+    js_value stored; PropertyAttributes flags;
+    if (own_property(maps, name, stored, flags)) {
+        if (flags.accessor) {
+            if (flags.setter.kind != JS_VALUE_FUNCTION) {
+                error = "cannot assign to getter-only property '" + name + "'";
+                return false;
+            }
+            js_value ignored;
+            return invoke(flags.setter, {value}, receiver, false, ignored);
+        }
+        if (!flags.writable) {
+            error = "cannot assign to read-only property '" + name + "'";
+            return false;
+        }
+    }
+    (*maps.values)[name] = value;
+    return true;
+}
 }

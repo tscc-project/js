@@ -131,7 +131,7 @@
     },
     {
       "id": "builtins",
-      "checkpoint": "JS10E",
+      "checkpoint": "JS10I",
       "status": {
         "tokenize": "implemented",
         "parse": "tested",

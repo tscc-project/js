@@ -302,3 +302,11 @@ object factory. Native names seed deterministic stack text and each propagating
 JavaScript call boundary appends its function name without changing throw object
 identity. Two cases raise the corpus to 160/160. Bytecode source positions,
 columns and async stacks remain deferred.
+
+## JS10I unified VM property dispatch (2026-08-30)
+
+Named reads, writes, getters, setters and prototype lookup for ordinary objects,
+arrays and functions now share `named_property_get/set`. VM call-method,
+conversion, get and set paths all use that boundary; array indices/length,
+function prototype and primitive strings remain explicit exotic operations.
+Four accessor cases raise the corpus to 164/164.
