@@ -1,5 +1,6 @@
 #include "VM.h"
 #include "Conversion.h"
+#include "Error.h"
 #include <cmath>
 #include <sstream>
 namespace jspp { namespace {
@@ -14,11 +15,11 @@ bool run(const Bytecode&code,std::shared_ptr<Environment>env,js_value&result,Com
  invoke=[&](const js_value&callee,const std::vector<js_value>&args,const js_value&receiver,bool construct,js_value&value){
   if(callee.kind!=JS_VALUE_FUNCTION||!callee.function){error="value is not callable";return false;}
   if(construct&&!callee.function->constructible){error="value is not a constructor";return false;}
-  if(callee.function->native){if(callee.function->native(args,receiver,construct,value,error,heap,invoke))return true;if(completion.kind==CompletionKind::Normal&&!error.empty()){const std::string error_name=error.find("array length")!=std::string::npos?"RangeError":"TypeError";js_value thrown;thrown.kind=JS_VALUE_OBJECT;thrown.object=heap.object();if(auto*error_constructor=find(env,error_name);error_constructor&&error_constructor->value.kind==JS_VALUE_FUNCTION)thrown.object->prototype=error_constructor->value.function->instance_prototype;thrown.object->properties["name"]={};thrown.object->properties["name"].kind=JS_VALUE_STRING;thrown.object->properties["name"].string=error_name;thrown.object->properties["message"]={};thrown.object->properties["message"].kind=JS_VALUE_STRING;thrown.object->properties["message"].string=error;thrown.object->properties["stack"]={};thrown.object->properties["stack"].kind=JS_VALUE_STRING;thrown.object->properties["stack"].string=error_name+": "+error;completion.kind=CompletionKind::Throw;completion.value=std::move(thrown);error.clear();}return false;}
+  if(callee.function->native){if(callee.function->native(args,receiver,construct,value,error,heap,invoke))return true;if(completion.kind==CompletionKind::Normal&&!error.empty()){const std::string error_name=error.find("array length")!=std::string::npos?"RangeError":"TypeError";std::shared_ptr<ObjectValue>prototype;if(auto*error_constructor=find(env,error_name);error_constructor&&error_constructor->value.kind==JS_VALUE_FUNCTION)prototype=error_constructor->value.function->instance_prototype;completion.kind=CompletionKind::Throw;completion.value=error_object(heap,error_name,error,prototype,{callee.function->name});error.clear();}return false;}
   if(!callee.function->prototype){error="function has no executable body";return false;}
   auto call_env=heap.environment();call_env->parent=callee.function->closure;call_env->bindings["this"]={receiver,true};const auto&p=*callee.function->prototype;
   for(std::size_t n=0;n<p.parameters.size();++n)call_env->bindings[p.parameters[n]]={n<args.size()?args[n]:js_value{},false};
-  Completion child;if(!run(*p.code,call_env,value,child,error,budget,depth+1,heap)){completion=std::move(child);return false;}return true;
+  Completion child;if(!run(*p.code,call_env,value,child,error,budget,depth+1,heap)){if(child.kind==CompletionKind::Throw)append_error_frame(child.value,p.name);completion=std::move(child);return false;}return true;
  };
  std::function<bool(const std::shared_ptr<ObjectValue>&,const js_value&,const std::string&,js_value&)>read_object;
  read_object=[&](const std::shared_ptr<ObjectValue>&object,const js_value&receiver,const std::string&name,js_value&out){for(auto at=object;at;at=at->prototype){auto attributes=at->attributes.find(name);if(attributes!=at->attributes.end()&&attributes->second.accessor){if(attributes->second.getter.kind!=JS_VALUE_FUNCTION){out={};return true;}return invoke(attributes->second.getter,{},receiver,false,out);}auto found=at->properties.find(name);if(found!=at->properties.end()){out=found->second;return true;}}return false;};

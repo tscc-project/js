@@ -294,3 +294,11 @@ Object, array and function descriptor storage now enters reflection through one
 operations. VM unit evidence pins value/attribute pairing and enumerable-key
 selection; the external corpus remains 158/158. Indexed array descriptors and
 full exotic-object invariants remain deferred.
+
+## JS10H centralized errors and stack frames (2026-08-30)
+
+Native validation failures and Error-family constructors now share one error
+object factory. Native names seed deterministic stack text and each propagating
+JavaScript call boundary appends its function name without changing throw object
+identity. Two cases raise the corpus to 160/160. Bytecode source positions,
+columns and async stacks remain deferred.

@@ -1,5 +1,6 @@
 #include "Intrinsics.h"
 #include "Property.h"
+#include "Error.h"
 #include "Conversion.h"
 #include <algorithm>
 #include <cmath>
@@ -125,9 +126,8 @@ IntrinsicSet create_intrinsics(Heap&heap){
         [](const std::vector<js_value>&args,const js_value&receiver,bool,js_value&out,std::string&error,Heap&,const NativeInvoke&){if(receiver.kind!=JS_VALUE_STRING){error="String.prototype.indexOf receiver is not a string";return false;}const auto found=receiver.string.find(args.empty()?std::string("undefined"):to_string(args[0]));out=number_value(found==std::string::npos?-1.0:static_cast<double>(found));return true;},set.function_prototype,set.object_prototype);
 
     auto make_error=[&](const std::string&name,const std::shared_ptr<ObjectValue>&prototype){
-        return make_native(heap,name,1,true,[name,prototype](const std::vector<js_value>&args,const js_value&receiver,bool construct,js_value&out,std::string&,Heap&heap,const NativeInvoke&){
-            if(construct&&receiver.kind==JS_VALUE_OBJECT)out=receiver;else{out.kind=JS_VALUE_OBJECT;out.object=heap.object();out.object->prototype=prototype;}
-            const auto message=args.empty()?std::string{}:to_string(args[0]);out.object->properties["name"]=string_value(name);out.object->properties["message"]=string_value(message);out.object->properties["stack"]=string_value(name+(message.empty()?std::string{}:": "+message));return true;
+        return make_native(heap,name,1,true,[name,prototype](const std::vector<js_value>&args,const js_value&,bool,js_value&out,std::string&,Heap&heap,const NativeInvoke&){
+            out=error_object(heap,name,args.empty()?std::string{}:to_string(args[0]),prototype);return true;
         },set.function_prototype,prototype);
     };
     auto error_prototype=heap.object();error_prototype->prototype=set.object_prototype;error_prototype->properties["name"]=string_value("Error");error_prototype->properties["message"]=string_value("");
