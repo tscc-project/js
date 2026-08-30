@@ -1,0 +1,75 @@
+# JS++ embedded preview contract plan
+
+The embedded preview is a bounded native product milestone, not a claim of
+general ECMAScript compatibility. It is reached when a C or C++ host can create
+one runtime, exchange ordinary values, install native functions, execute a
+documented language subset under resource limits, inspect exceptions and stacks,
+and tear everything down without undefined ownership.
+
+## Contract to freeze
+
+### Lifecycle and ABI
+
+- `js_runtime` and `js_value` remain opaque C handles.
+- Runtime operations are confined to the creator thread; values never outlive
+  their runtime and every owning handle has an explicit release operation.
+- `js_eval` may be called repeatedly on one runtime and reports a typed status
+  plus runtime-owned diagnostic text.
+- The preview declares ABI/version policy and ships a C header, static and shared
+  libraries, and build-system metadata for the supported platforms.
+
+The current API already proves runtime creation/destruction, evaluation, value
+release, kind inspection and primitive reads. It is pre-release and may change
+while the remaining preview surface is designed.
+
+### Host bridge
+
+The preview must add deliberate APIs for creating primitive values, constructing
+objects and arrays, reading and writing properties/elements, calling JavaScript
+functions, and registering native callbacks with host data. Callback re-entry,
+retained handles and native-to-JS exception propagation need explicit ownership
+and rooting rules.
+
+### Containment
+
+The existing internal instruction budget becomes a configurable embedding
+control. The contract must also define allocation failure, a bounded heap or
+allocation policy, recursion limits, cancellation behavior, and what remains
+valid after an evaluation fails. JS++ supplies no filesystem, network, timer,
+environment or module-loading authority unless the host explicitly provides it.
+
+### Language surface
+
+The preview freezes a versioned matrix rather than saying "JavaScript supported".
+Its likely inclusion set is the tested primitives, bindings, control flow,
+functions/closures, objects/arrays/prototypes, throw/try/catch/finally,
+conversions, descriptors/accessors and bounded Object, Function, Array, String
+and Error families. Promises/jobs, ECMAScript modules, proxies, typed arrays,
+weak references, internationalization, browser APIs and Node APIs are excluded
+unless promoted by their own evidence.
+
+## Executable exit demonstration
+
+A separately compiled C example must create a limited runtime; inject a native
+function and structured input; evaluate closures, objects and an array callback;
+return a structured result; cross the callback boundary both ways; inspect a
+JavaScript Error with deterministic source frames; contain a budget failure and
+evaluate successfully afterward; then release everything under ASan and UBSan.
+
+## Definition checkpoints
+
+1. **EP0 - contract inventory:** classify every API, language and packaging item
+   as implemented, required, deferred or excluded; freeze the demonstration.
+2. **EP1 - host values:** constructors, inspection, object/array properties and
+   explicit owning/borrowed-handle rules.
+3. **EP2 - calls and callbacks:** JavaScript calls, native registration, host
+   data, re-entry, rooting and exception transfer.
+4. **EP3 - containment:** public budgets, heap/allocation policy, recovery after
+   failure and thread-confinement tests.
+5. **EP4 - package and ABI:** shared/static artifacts, symbol visibility,
+   versioning, metadata, C/C++ consumers and supported-platform builds.
+6. **EP5 - preview candidate:** run the frozen demonstration, regression corpus,
+   selected conformance slice, sanitizer/fuzz/soak gates and publish exact limits.
+
+EP0 comes next. It may split later checkpoints, but it may not weaken the exit
+demonstration without recording the evidence that forced the change.

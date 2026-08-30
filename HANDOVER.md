@@ -319,3 +319,10 @@ a stable source location, visible in disassembly. Error frames now include
 cases raise the corpus to 166/166. Filenames, expression-precise columns, source
 maps and async stacks remain deferred. Runtime object dependencies now include
 the transitive frontend/bytecode headers to prevent mixed-layout partial links.
+
+## Embedded preview contract gate (2026-08-30)
+
+`docs/EMBEDDED-PREVIEW.md` defines the next convergence target. Proceed through
+EP0 inventory, EP1 host values, EP2 calls/callbacks, EP3 containment, EP4
+packaging/ABI and EP5 candidate evidence. The frozen host demonstration, not an
+open-ended language feature count, decides preview readiness.
