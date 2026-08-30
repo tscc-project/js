@@ -41,6 +41,20 @@ JS_API int js_value_get_boolean(const js_value *value,int *out);
 JS_API int js_value_get_number(const js_value *value,double *out);
 JS_API int js_value_get_string(const js_value *value,const char **data,size_t *size);
 
+/* Every value returned through js_value ** is an owning runtime handle. */
+JS_API js_status js_value_new_undefined(js_runtime *runtime,js_value **result);
+JS_API js_status js_value_new_null(js_runtime *runtime,js_value **result);
+JS_API js_status js_value_new_boolean(js_runtime *runtime,int value,js_value **result);
+JS_API js_status js_value_new_number(js_runtime *runtime,double value,js_value **result);
+JS_API js_status js_value_new_string(js_runtime *runtime,const char *data,size_t size,js_value **result);
+JS_API js_status js_object_new(js_runtime *runtime,js_value **result);
+JS_API js_status js_array_new(js_runtime *runtime,js_value **result);
+JS_API js_status js_object_set(js_runtime *runtime,js_value *object,const char *name,size_t name_size,const js_value *value);
+JS_API js_status js_object_get(js_runtime *runtime,const js_value *object,const char *name,size_t name_size,js_value **result);
+JS_API js_status js_array_set(js_runtime *runtime,js_value *array,size_t index,const js_value *value);
+JS_API js_status js_array_get(js_runtime *runtime,const js_value *array,size_t index,js_value **result);
+JS_API js_status js_array_get_length(js_runtime *runtime,const js_value *array,size_t *length);
+
 #ifdef __cplusplus
 }
 #endif

@@ -18,15 +18,16 @@ and tear everything down without undefined ownership.
 - The preview declares ABI/version policy and ships a C header, static and shared
   libraries, and build-system metadata for the supported platforms.
 
-The current API already proves runtime creation/destruction, evaluation, value
-release, kind inspection and primitive reads. It is pre-release and may change
+The current API proves runtime creation/destruction, evaluation, value release,
+kind inspection, primitive reads, host primitive construction and bounded
+object/array construction and own-data access. It is pre-release and may change
 while the remaining preview surface is designed.
 
 ### Host bridge
 
-The preview must add deliberate APIs for creating primitive values, constructing
-objects and arrays, reading and writing properties/elements, calling JavaScript
-functions, and registering native callbacks with host data. Callback re-entry,
+EP1 adds deliberate APIs for creating primitive values, constructing objects and
+arrays, and reading/writing own data properties/elements. The preview must still
+add JavaScript calls and native callbacks with host data. Callback re-entry,
 retained handles and native-to-JS exception propagation need explicit ownership
 and rooting rules.
 

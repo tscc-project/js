@@ -6,6 +6,7 @@
 #include "Version.h"
 #include <new>
 #include <memory>
+#include <limits>
 
 extern "C" {
 const char*js_version(void){return JS_VERSION;}
@@ -14,6 +15,14 @@ static void collect(js_runtime*r){std::vector<js_value>roots=r->intrinsic_roots;
 void js_runtime_free(js_runtime*r){if(!r)return;for(auto*v:r->values)delete v;r->values.clear();r->intrinsic_roots.clear();r->global.reset();r->heap->collect({});delete r;}
 const char*js_runtime_last_error(const js_runtime*r){return r?r->error.c_str():"invalid runtime";}
 static js_status fail(js_runtime*r,js_status s,const char*m){if(r)r->error=m;return s;}
+static bool owner(js_runtime*r){return r&&r->owner==std::this_thread::get_id();}
+static bool owns(js_runtime*r,const js_value*v){return r&&v&&r->values.count(const_cast<js_value*>(v));}
+static js_status retain(js_runtime*r,const js_value&value,js_value**out){
+ if(out)*out=nullptr;
+ if(!r||!out)return fail(r,JS_STATUS_INVALID_ARGUMENT,"runtime and result are required");
+ if(!owner(r))return fail(r,JS_STATUS_WRONG_THREAD,"runtime used from a non-owner thread");
+ try{auto handle=std::make_unique<js_value>(value);r->values.insert(handle.get());*out=handle.release();r->error.clear();return JS_STATUS_OK;}catch(const std::bad_alloc&){return fail(r,JS_STATUS_OUT_OF_MEMORY,"out of memory");}
+}
 js_status js_eval(js_runtime*r,const char*source,js_value**result){
  if(result)*result=nullptr;
  if(!r||!source||!result)return fail(r,JS_STATUS_INVALID_ARGUMENT,"runtime, source and result are required");
@@ -25,4 +34,16 @@ js_value_kind js_value_get_kind(const js_value*v){return v?v->kind:JS_VALUE_UNDE
 int js_value_get_boolean(const js_value*v,int*out){if(!v||!out||v->kind!=JS_VALUE_BOOLEAN)return 0;*out=v->boolean?1:0;return 1;}
 int js_value_get_number(const js_value*v,double*out){if(!v||!out||v->kind!=JS_VALUE_NUMBER)return 0;*out=v->number;return 1;}
 int js_value_get_string(const js_value*v,const char**data,size_t*size){if(!v||!data||!size||v->kind!=JS_VALUE_STRING)return 0;*data=v->string.data();*size=v->string.size();return 1;}
+js_status js_value_new_undefined(js_runtime*r,js_value**out){return retain(r,{},out);}
+js_status js_value_new_null(js_runtime*r,js_value**out){js_value v;v.kind=JS_VALUE_NULL;return retain(r,v,out);}
+js_status js_value_new_boolean(js_runtime*r,int input,js_value**out){js_value v;v.kind=JS_VALUE_BOOLEAN;v.boolean=input!=0;return retain(r,v,out);}
+js_status js_value_new_number(js_runtime*r,double input,js_value**out){js_value v;v.kind=JS_VALUE_NUMBER;v.number=input;return retain(r,v,out);}
+js_status js_value_new_string(js_runtime*r,const char*data,size_t size,js_value**out){if(!data&&size)return fail(r,JS_STATUS_INVALID_ARGUMENT,"string data is required");js_value v;v.kind=JS_VALUE_STRING;try{if(data)v.string.assign(data,size);}catch(const std::bad_alloc&){return fail(r,JS_STATUS_OUT_OF_MEMORY,"out of memory");}return retain(r,v,out);}
+js_status js_object_new(js_runtime*r,js_value**out){if(!r)return fail(r,JS_STATUS_INVALID_ARGUMENT,"runtime is required");if(!owner(r))return fail(r,JS_STATUS_WRONG_THREAD,"runtime used from a non-owner thread");try{js_value v;v.kind=JS_VALUE_OBJECT;v.object=r->heap->object();return retain(r,v,out);}catch(const std::bad_alloc&){return fail(r,JS_STATUS_OUT_OF_MEMORY,"out of memory");}}
+js_status js_array_new(js_runtime*r,js_value**out){if(!r)return fail(r,JS_STATUS_INVALID_ARGUMENT,"runtime is required");if(!owner(r))return fail(r,JS_STATUS_WRONG_THREAD,"runtime used from a non-owner thread");try{js_value v;v.kind=JS_VALUE_ARRAY;v.array=r->heap->array();return retain(r,v,out);}catch(const std::bad_alloc&){return fail(r,JS_STATUS_OUT_OF_MEMORY,"out of memory");}}
+js_status js_object_set(js_runtime*r,js_value*object,const char*name,size_t size,const js_value*value){if(!owner(r))return fail(r,r?JS_STATUS_WRONG_THREAD:JS_STATUS_INVALID_ARGUMENT,r?"runtime used from a non-owner thread":"runtime is required");if(!owns(r,object)||!owns(r,value)||!name||object->kind!=JS_VALUE_OBJECT||!object->object)return fail(r,JS_STATUS_INVALID_ARGUMENT,"owned object, name and value are required");try{object->object->properties[std::string(name,size)]=*value;r->error.clear();collect(r);return JS_STATUS_OK;}catch(const std::bad_alloc&){return fail(r,JS_STATUS_OUT_OF_MEMORY,"out of memory");}}
+js_status js_object_get(js_runtime*r,const js_value*object,const char*name,size_t size,js_value**out){if(!owner(r))return fail(r,r?JS_STATUS_WRONG_THREAD:JS_STATUS_INVALID_ARGUMENT,r?"runtime used from a non-owner thread":"runtime is required");if(!owns(r,object)||!name||object->kind!=JS_VALUE_OBJECT||!object->object)return fail(r,JS_STATUS_INVALID_ARGUMENT,"owned object and name are required");auto it=object->object->properties.find(std::string(name,size));return retain(r,it==object->object->properties.end()?js_value{}:it->second,out);}
+js_status js_array_set(js_runtime*r,js_value*array,size_t index,const js_value*value){if(!owner(r))return fail(r,r?JS_STATUS_WRONG_THREAD:JS_STATUS_INVALID_ARGUMENT,r?"runtime used from a non-owner thread":"runtime is required");if(!owns(r,array)||!owns(r,value)||array->kind!=JS_VALUE_ARRAY||!array->array)return fail(r,JS_STATUS_INVALID_ARGUMENT,"owned array and value are required");if(index>std::numeric_limits<size_t>::max()-1)return fail(r,JS_STATUS_INVALID_ARGUMENT,"array index is too large");try{if(index>=array->array->elements.size())array->array->elements.resize(index+1);array->array->elements[index]=*value;r->error.clear();collect(r);return JS_STATUS_OK;}catch(const std::bad_alloc&){return fail(r,JS_STATUS_OUT_OF_MEMORY,"out of memory");}}
+js_status js_array_get(js_runtime*r,const js_value*array,size_t index,js_value**out){if(!owner(r))return fail(r,r?JS_STATUS_WRONG_THREAD:JS_STATUS_INVALID_ARGUMENT,r?"runtime used from a non-owner thread":"runtime is required");if(!owns(r,array)||array->kind!=JS_VALUE_ARRAY||!array->array)return fail(r,JS_STATUS_INVALID_ARGUMENT,"owned array is required");return retain(r,index<array->array->elements.size()?array->array->elements[index]:js_value{},out);}
+js_status js_array_get_length(js_runtime*r,const js_value*array,size_t*length){if(!owner(r))return fail(r,r?JS_STATUS_WRONG_THREAD:JS_STATUS_INVALID_ARGUMENT,r?"runtime used from a non-owner thread":"runtime is required");if(!owns(r,array)||!length||array->kind!=JS_VALUE_ARRAY||!array->array)return fail(r,JS_STATUS_INVALID_ARGUMENT,"owned array and length are required");*length=array->array->elements.size();r->error.clear();return JS_STATUS_OK;}
 }

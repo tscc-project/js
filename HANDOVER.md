@@ -333,3 +333,10 @@ The machine-readable contract is `docs/embedded-preview-contract.json`; the
 frozen exit host is `examples/embedded-preview.c`. Linux C11/C++17 consumption is
 the initial platform. Promises/jobs, modules, proxies, typed arrays, weak refs,
 Intl and browser/Node APIs are explicitly excluded.
+
+## EP1 host values (2026-08-30)
+
+`js.h` now creates primitive/object/array values and provides bounded own-data
+object and array access. Every returned `js_value **` is an owning runtime handle;
+inputs must be live handles owned by that runtime. Accessors/prototype traversal
+remain language-side paths until EP2 exposes common calls safely.
