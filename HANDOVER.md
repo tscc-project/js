@@ -355,3 +355,11 @@ thrown value. The independent corpus is 168/168.
 Next is EP3 containment, then EP4 packaging/ABI, then EP5 candidate evidence.
 Do not start promises/modules merely to increase language breadth before the
 embedding safety and distribution contract closes.
+
+## EP3 containment (2026-08-30)
+
+The public C API configures per-runtime instruction and call-stack limits plus a
+cumulative engine-allocation limit. Instruction/stack exhaustion returns
+`JS_STATUS_LIMIT_EXCEEDED`; allocation exhaustion returns OUT_OF_MEMORY. Raising
+or disabling a limit permits successful reuse after failure. The synchronous
+preview has no async cancellation API. The corpus is 169/169.

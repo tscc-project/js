@@ -26,14 +26,15 @@ public:
  bool collection_due()const{return collection_blocks_==0&&allocations_>=next_collection_;}
  void block_collection(){++collection_blocks_;}
  void unblock_collection(){if(collection_blocks_)--collection_blocks_;}
+ void set_allocation_limit(std::size_t limit){allocation_limit_=limit;}
  std::size_t collections()const{return collections_;}
 private:
- std::size_t allocations_=0,next_collection_=64,collections_=0,collection_blocks_=0;bool collecting_=false;std::vector<std::weak_ptr<Environment>>environments_;
+ std::size_t allocations_=0,next_collection_=64,collections_=0,collection_blocks_=0,allocation_limit_=0;bool collecting_=false;std::vector<std::weak_ptr<Environment>>environments_;
  std::vector<std::weak_ptr<FunctionObject>>functions_;std::vector<std::weak_ptr<ObjectValue>>objects_;
  std::vector<std::weak_ptr<ArrayValue>>arrays_;
 };
 enum class CompletionKind { Normal,Return,Throw,Break,Continue };
 struct Completion { CompletionKind kind=CompletionKind::Normal;js_value value;std::size_t target=0,target_scope=0; };
-bool execute_completion(const Bytecode&,Completion&,std::string&error,std::size_t instruction_budget=1000000,Heap*heap=nullptr,std::shared_ptr<Environment>global={});
-bool execute(const Bytecode&,js_value&,std::string&error,std::size_t instruction_budget=1000000,Heap*heap=nullptr,std::shared_ptr<Environment>global={});
+bool execute_completion(const Bytecode&,Completion&,std::string&error,std::size_t instruction_budget=1000000,Heap*heap=nullptr,std::shared_ptr<Environment>global={},std::size_t stack_limit=512);
+bool execute(const Bytecode&,js_value&,std::string&error,std::size_t instruction_budget=1000000,Heap*heap=nullptr,std::shared_ptr<Environment>global={},std::size_t stack_limit=512);
 }

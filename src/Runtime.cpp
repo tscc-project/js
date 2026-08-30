@@ -26,6 +26,10 @@ static js_status retain(js_runtime*r,const js_value&value,js_value**out){
  try{auto handle=std::make_unique<js_value>(value);r->values.insert(handle.get());*out=handle.release();r->error.clear();return JS_STATUS_OK;}catch(const std::bad_alloc&){return fail(r,JS_STATUS_OUT_OF_MEMORY,"out of memory");}
 }
 js_status js_runtime_get_exception(js_runtime*r,js_value**out){if(!r||!out)return fail(r,JS_STATUS_INVALID_ARGUMENT,"runtime and result are required");if(!owner(r))return fail(r,JS_STATUS_WRONG_THREAD,"runtime used from a non-owner thread");if(!r->has_exception)return fail(r,JS_STATUS_INVALID_ARGUMENT,"no JavaScript exception is available");return retain(r,r->last_exception,out);}
+js_status js_runtime_set_instruction_limit(js_runtime*r,size_t limit){if(!r||!limit)return fail(r,JS_STATUS_INVALID_ARGUMENT,"runtime and non-zero instruction limit are required");if(!owner(r))return fail(r,JS_STATUS_WRONG_THREAD,"runtime used from a non-owner thread");r->instruction_limit=limit;r->error.clear();return JS_STATUS_OK;}
+js_status js_runtime_set_stack_limit(js_runtime*r,size_t limit){if(!r||!limit)return fail(r,JS_STATUS_INVALID_ARGUMENT,"runtime and non-zero stack limit are required");if(!owner(r))return fail(r,JS_STATUS_WRONG_THREAD,"runtime used from a non-owner thread");r->stack_limit=limit;r->error.clear();return JS_STATUS_OK;}
+js_status js_runtime_set_allocation_limit(js_runtime*r,size_t limit){if(!r)return JS_STATUS_INVALID_ARGUMENT;if(!owner(r))return fail(r,JS_STATUS_WRONG_THREAD,"runtime used from a non-owner thread");if(limit&&limit<r->heap->allocations())return fail(r,JS_STATUS_INVALID_ARGUMENT,"allocation limit is below the current allocation count");r->heap->set_allocation_limit(limit);r->error.clear();return JS_STATUS_OK;}
+js_status js_runtime_get_allocation_count(js_runtime*r,size_t*count){if(!r||!count)return fail(r,JS_STATUS_INVALID_ARGUMENT,"runtime and count are required");if(!owner(r))return fail(r,JS_STATUS_WRONG_THREAD,"runtime used from a non-owner thread");*count=r->heap->allocations();r->error.clear();return JS_STATUS_OK;}
 struct EvaluationScope{
  js_runtime*r;bool nested;
  explicit EvaluationScope(js_runtime*runtime):r(runtime),nested(runtime->evaluation_depth>0){if(nested)r->heap->block_collection();++r->evaluation_depth;}
@@ -41,8 +45,8 @@ js_status js_eval(js_runtime*r,const char*source,js_value**result){
   jspp::Bytecode code;std::string error;
   if(!jspp::compile(program,code,error))return fail(r,JS_STATUS_SYNTAX_ERROR,error.c_str());
   auto value=std::make_unique<js_value>();jspp::Completion completion;bool executed=false;
-  {EvaluationScope scope(r);executed=jspp::execute_completion(code,completion,error,1000000,r->heap.get(),r->global);}
-  if(!executed){if(completion.kind==jspp::CompletionKind::Throw){r->last_exception=completion.value;r->has_exception=true;}return fail(r,JS_STATUS_RUNTIME_ERROR,error.c_str());}
+  {EvaluationScope scope(r);executed=jspp::execute_completion(code,completion,error,r->instruction_limit,r->heap.get(),r->global,r->stack_limit);}
+  if(!executed){if(completion.kind==jspp::CompletionKind::Throw){r->last_exception=completion.value;r->has_exception=true;}return fail(r,error=="execution limit exceeded"||error=="call stack limit exceeded"?JS_STATUS_LIMIT_EXCEEDED:JS_STATUS_RUNTIME_ERROR,error.c_str());}
   *value=completion.value;r->values.insert(value.get());r->error.clear();r->has_exception=false;*result=value.release();collect(r);return JS_STATUS_OK;
  }catch(const std::bad_alloc&){return fail(r,JS_STATUS_OUT_OF_MEMORY,"out of memory");}catch(...){return fail(r,JS_STATUS_RUNTIME_ERROR,"internal runtime failure");}
 }

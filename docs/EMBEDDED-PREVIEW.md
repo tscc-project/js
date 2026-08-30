@@ -34,10 +34,12 @@ handle to the engine.
 
 ### Containment
 
-The existing internal instruction budget becomes a configurable embedding
-control. The contract must also define allocation failure, a bounded heap or
-allocation policy, recursion limits, cancellation behavior, and what remains
-valid after an evaluation fails. JS++ supplies no filesystem, network, timer,
+EP3 exposes per-runtime instruction and call-stack limits plus a cumulative
+engine-allocation limit. Instruction/stack exhaustion returns
+`JS_STATUS_LIMIT_EXCEEDED`; allocation exhaustion returns
+`JS_STATUS_OUT_OF_MEMORY`. Limits can be raised or disabled and the runtime must
+evaluate successfully after a contained failure. Evaluation is synchronous, so
+there is no asynchronous cancellation API in this preview. JS++ supplies no filesystem, network, timer,
 environment or module-loading authority unless the host explicitly provides it.
 
 ### Language surface

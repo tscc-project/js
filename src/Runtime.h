@@ -19,4 +19,6 @@ struct js_runtime {
  std::size_t host_sequence=0;
  js_value last_exception;
  bool has_exception=false;
+ std::size_t instruction_limit=1000000;
+ std::size_t stack_limit=512;
 };

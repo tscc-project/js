@@ -21,7 +21,11 @@ int main(void) {
     arguments[0]=left;arguments[1]=right;
     if (js_call(runtime,callback,0,arguments,2,&result) ||
         !js_value_get_number(result,&answer) || answer!=42) return 3;
-    /* EP3: contain a configured budget failure, then evaluate again. */
+    js_value_free(runtime,result);result=0;
+    if (js_runtime_set_instruction_limit(runtime,32) ||
+        js_eval(runtime,"while(true){}",&result)!=JS_STATUS_LIMIT_EXCEEDED ||
+        js_runtime_set_instruction_limit(runtime,1000) ||
+        js_eval(runtime,"6*7",&result)!=JS_STATUS_OK) return 4;
     js_value_free(runtime,result);js_value_free(runtime,right);js_value_free(runtime,left);js_value_free(runtime,callback);
     js_runtime_free(runtime);
     return 0;
