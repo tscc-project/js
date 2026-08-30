@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "milestone": "JS++ Embedded Preview",
+  "status": "contract-frozen",
+  "public_header": "include/js.h",
+  "threading": "one creator thread per runtime",
+  "handle_rule": "owned js_value handles are released explicitly and never outlive their runtime",
+  "required_api": ["runtime-lifecycle", "repeated-evaluation", "primitive-inspection", "host-value-creation", "object-array-access", "javascript-call", "native-callback", "callback-reentry", "exception-transfer", "instruction-limit", "allocation-policy"],
+  "preview_language": ["primitives", "bindings", "structured-control-flow", "functions-closures", "objects-arrays-prototypes", "throw-try-catch-finally", "conversions", "data-descriptors-accessors", "bounded-object-function-array-string-error"],
+  "excluded": ["promises-jobs", "ecmascript-modules", "proxy", "typed-arrays", "weak-references", "internationalization", "browser-apis", "node-apis"],
+  "initial_platform": "Linux C11/C++17 consumers",
+  "exit_demo": "examples/embedded-preview.c",
+  "candidate_gates": ["public-header-only-consumer", "166-case-baseline-or-higher", "selected-conformance", "asan-ubsan", "fuzz", "soak", "static-and-shared-package"]
+}

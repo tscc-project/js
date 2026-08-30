@@ -326,3 +326,10 @@ the transitive frontend/bytecode headers to prevent mixed-layout partial links.
 EP0 inventory, EP1 host values, EP2 calls/callbacks, EP3 containment, EP4
 packaging/ABI and EP5 candidate evidence. The frozen host demonstration, not an
 open-ended language feature count, decides preview readiness.
+
+## EP0 contract inventory (2026-08-30)
+
+The machine-readable contract is `docs/embedded-preview-contract.json`; the
+frozen exit host is `examples/embedded-preview.c`. Linux C11/C++17 consumption is
+the initial platform. Promises/jobs, modules, proxies, typed arrays, weak refs,
+Intl and browser/Node APIs are explicitly excluded.

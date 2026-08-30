@@ -16,7 +16,7 @@ CLI := $(BUILD)/js
 STATIC := $(BUILD)/libjs.a
 SHARED := $(BUILD)/libjs.so
 
-.PHONY: all test test-unit test-regression test-heap test-sanitize clean
+.PHONY: all test test-unit test-regression test-preview-contract test-heap test-sanitize clean
 all: $(CLI) $(STATIC) $(SHARED)
 $(BUILD):
 	mkdir -p $(BUILD)
@@ -57,7 +57,9 @@ test-unit: $(CLI) $(BUILD)/lifecycle $(BUILD)/frontend $(BUILD)/vm test-heap
 	./$(BUILD)/vm
 test-regression: all
 	python3 ../js-regression-suite/run.py --js "$(abspath $(CLI))" --include "$(abspath include)" --library "$(abspath $(STATIC))"
-test: test-unit test-regression
+test-preview-contract:
+	python3 ../js-regression-suite/validate_preview_contract.py
+test: test-preview-contract test-unit test-regression
 test-sanitize:
 	mkdir -p $(BUILD)/san
 	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/lifecycle.cpp src/Runtime.cpp src/Frontend.cpp src/Bytecode.cpp src/VM.cpp src/Heap.cpp src/Conversion.cpp src/Intrinsics.cpp -pthread -o $(BUILD)/san/lifecycle
