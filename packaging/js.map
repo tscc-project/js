@@ -1,0 +1,4 @@
+JSPP_0.1 {
+    global: js_*;
+    local: *;
+};

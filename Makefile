@@ -3,6 +3,13 @@ CC ?= cc
 AR ?= ar
 CPPFLAGS := -Isrc -Iinclude
 CXXFLAGS ?= -std=c++17 -O2 -Wall -Wextra -pedantic
+CXXFLAGS += -fvisibility=hidden
+PREFIX ?= /usr/local
+LIBDIR ?= $(PREFIX)/lib
+INCLUDEDIR ?= $(PREFIX)/include
+BINDIR ?= $(PREFIX)/bin
+DATADIR ?= $(PREFIX)/share
+ABI_MAJOR := 0
 BUILD := build
 OBJECT := $(BUILD)/Runtime.o
 FRONTEND_OBJECT := $(BUILD)/Frontend.o
@@ -14,9 +21,10 @@ INTRINSICS_OBJECT := $(BUILD)/Intrinsics.o
 LIB_OBJECTS := $(OBJECT) $(FRONTEND_OBJECT) $(BYTECODE_OBJECT) $(VM_OBJECT) $(HEAP_OBJECT) $(CONVERSION_OBJECT) $(INTRINSICS_OBJECT)
 CLI := $(BUILD)/js
 STATIC := $(BUILD)/libjs.a
+SHARED_REAL := $(BUILD)/libjs.so.$(ABI_MAJOR)
 SHARED := $(BUILD)/libjs.so
 
-.PHONY: all test test-unit test-regression test-preview-contract test-heap test-sanitize clean
+.PHONY: all test test-unit test-regression test-preview-contract test-heap test-sanitize install package-test clean
 all: $(CLI) $(STATIC) $(SHARED)
 $(BUILD):
 	mkdir -p $(BUILD)
@@ -36,8 +44,10 @@ $(INTRINSICS_OBJECT): src/Intrinsics.cpp src/Intrinsics.h src/Property.h src/Err
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
 $(STATIC): $(LIB_OBJECTS)
 	$(AR) rcs $@ $^
-$(SHARED): $(LIB_OBJECTS)
-	$(CXX) -shared $^ -o $@
+$(SHARED_REAL): $(LIB_OBJECTS) packaging/js.map
+	$(CXX) -shared -Wl,-soname,libjs.so.$(ABI_MAJOR) -Wl,--version-script=packaging/js.map $(LIB_OBJECTS) -o $@
+$(SHARED): $(SHARED_REAL)
+	ln -sf libjs.so.$(ABI_MAJOR) $@
 $(CLI): src/main.cpp $(STATIC)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) src/main.cpp $(STATIC) -pthread -o $@
 $(BUILD)/lifecycle: tests/lifecycle.cpp $(STATIC)
@@ -60,6 +70,17 @@ test-regression: all
 test-preview-contract:
 	python3 ../js-regression-suite/validate_preview_contract.py
 test: test-preview-contract test-unit test-regression
+install: all
+	install -d "$(DESTDIR)$(INCLUDEDIR)" "$(DESTDIR)$(LIBDIR)/pkgconfig" "$(DESTDIR)$(LIBDIR)/cmake/JSpp" "$(DESTDIR)$(BINDIR)"
+	install -m 0644 include/js.h "$(DESTDIR)$(INCLUDEDIR)/js.h"
+	install -m 0644 $(STATIC) "$(DESTDIR)$(LIBDIR)/libjs.a"
+	install -m 0755 $(SHARED_REAL) "$(DESTDIR)$(LIBDIR)/libjs.so.$(ABI_MAJOR)"
+	ln -sf libjs.so.$(ABI_MAJOR) "$(DESTDIR)$(LIBDIR)/libjs.so"
+	install -m 0755 $(CLI) "$(DESTDIR)$(BINDIR)/js"
+	sed 's|@PREFIX@|$(PREFIX)|g' packaging/jspp.pc.in > "$(DESTDIR)$(LIBDIR)/pkgconfig/jspp.pc"
+	sed 's|@PREFIX@|$(PREFIX)|g' packaging/JSppConfig.cmake.in > "$(DESTDIR)$(LIBDIR)/cmake/JSpp/JSppConfig.cmake"
+package-test: all
+	bash tests/package.sh
 test-sanitize:
 	mkdir -p $(BUILD)/san
 	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/lifecycle.cpp src/Runtime.cpp src/Frontend.cpp src/Bytecode.cpp src/VM.cpp src/Heap.cpp src/Conversion.cpp src/Intrinsics.cpp -pthread -o $(BUILD)/san/lifecycle

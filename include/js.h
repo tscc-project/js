@@ -9,9 +9,15 @@ extern "C" {
 # define JS_API __declspec(dllexport)
 #elif defined(_WIN32) && defined(JS_USE_SHARED)
 # define JS_API __declspec(dllimport)
+#elif defined(__GNUC__) || defined(__clang__)
+# define JS_API __attribute__((visibility("default")))
 #else
 # define JS_API
 #endif
+
+#define JS_API_VERSION_MAJOR 0
+#define JS_API_VERSION_MINOR 1
+#define JS_API_VERSION ((JS_API_VERSION_MAJOR << 16) | JS_API_VERSION_MINOR)
 
 typedef struct js_runtime js_runtime;
 typedef struct js_value js_value;
@@ -37,6 +43,7 @@ typedef js_status (*js_native_callback)(js_runtime *runtime,
    owning handle to the engine. */
 
 JS_API const char *js_version(void);
+JS_API unsigned int js_api_version(void);
 JS_API js_runtime *js_runtime_new(void);
 JS_API void js_runtime_free(js_runtime *runtime);
 JS_API const char *js_runtime_last_error(const js_runtime *runtime);

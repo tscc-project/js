@@ -11,6 +11,7 @@
 
 extern "C" {
 const char*js_version(void){return JS_VERSION;}
+unsigned int js_api_version(void){return JS_API_VERSION;}
 js_runtime*js_runtime_new(void){try{auto r=std::make_unique<js_runtime>();r->heap=std::make_shared<jspp::Heap>();auto intrinsics=jspp::create_intrinsics(*r->heap);r->global=std::move(intrinsics.global);r->intrinsic_roots=std::move(intrinsics.roots);return r.release();}catch(...){return nullptr;}}
 static void collect(js_runtime*r){if(r->evaluation_depth)return;std::vector<js_value>roots=r->intrinsic_roots;for(auto*v:r->values)roots.push_back(*v);r->heap->collect(roots,{r->global});}
 void js_runtime_free(js_runtime*r){if(!r)return;for(auto*v:r->values)delete v;r->values.clear();r->intrinsic_roots.clear();r->global.reset();r->heap->collect({});delete r;}

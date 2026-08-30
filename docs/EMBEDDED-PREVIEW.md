@@ -78,10 +78,9 @@ evaluate successfully afterward; then release everything under ASan and UBSan.
 EP0 is frozen. Later checkpoints may split, but may not weaken the exit
 demonstration without recording the evidence that forced the change.
 
-## Reassessment after EP0-EP2
+## Reassessment after EP0-EP4
 
-Calls/callbacks are no longer the preview blocker. Proceed with EP3 containment
-before packaging: the hard-coded instruction budget needs a public per-runtime
-contract, heap/allocation limits need deterministic failure, and both must prove
-recovery and re-entry safety. EP4 then packages the stabilized API. EP5 runs the
-candidate evidence rather than adding another broad language family.
+Calls/callbacks, containment and the initial Linux distribution contract are
+closed. ABI 0.1 ships public-header static/shared consumption, SONAME 0,
+versioned public symbols, install rules and pkg-config/CMake metadata. EP5 now
+runs the candidate evidence rather than adding another broad language family.

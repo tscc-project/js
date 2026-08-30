@@ -363,3 +363,13 @@ cumulative engine-allocation limit. Instruction/stack exhaustion returns
 `JS_STATUS_LIMIT_EXCEEDED`; allocation exhaustion returns OUT_OF_MEMORY. Raising
 or disabling a limit permits successful reuse after failure. The synchronous
 preview has no async cancellation API. The corpus is 169/169.
+
+## EP4 package and ABI (2026-08-30)
+
+The public header declares ABI 0.1 through `JS_API_VERSION` and
+`js_api_version()`. Linux builds install `libjs.a`, SONAME `libjs.so.0`, the
+`js` CLI, `js.h`, pkg-config metadata and a CMake imported target. A linker
+version script exports only versioned `js_*` symbols. `make package-test`
+installs into an isolated prefix and compiles a C static consumer and C++ shared
+consumer from public files. Windows/macOS packaging remains outside this initial
+Linux preview contract.
