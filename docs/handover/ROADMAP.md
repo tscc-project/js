@@ -57,6 +57,15 @@ independent parsing of tscc output, a shared emitted-JavaScript corpus, then a
 syntax-sharing decision gate. Production embedding in tscc remains optional and
 requires a concrete bounded feature.
 
+## Preview-qualified next sequence (2026-08-30)
+
+EP0-EP5 has qualified the bounded Linux embedded preview. Next, preserve PC0V as
+an external Valgrind task for DeepSeek on Nick's Ubuntu machine; add PC0P
+second-platform packaging only in an authorized remote-workflow task; build EP6A
+around a pinned selected-Test262 revision; and trial real embedding hosts. The
+following feature checkpoint is selected from those results rather than assumed
+to be promises or modules in advance.
+
 Compiler coordination status: tscc CP3/TC1 now retains a durable per-file
 compilation unit through emission. This changes no JS++ ownership or dependency:
 JS++ remains independent, and its first tscc role remains a test runtime after the

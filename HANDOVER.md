@@ -394,3 +394,40 @@ then EP6 a pinned selected Test262/conformance harness, then real embedding-host
 trials. Only after those results should the engine choose between jobs/promises,
 modules or another compatibility slice. The embedded preview is complete enough
 to gather evidence instead of extending the contract indefinitely.
+
+## Current game-plan handoff (2026-08-30)
+
+JS++ EP0-EP5 is complete as a bounded Linux embedded preview. The retained
+evidence is 171/171, ABI 0.1 static/shared package consumers, versioned public
+symbols, the frozen C host demonstration, containment and recovery, ASan/UBSan,
+400 deterministic malformed mutations and a 250-evaluation same-runtime soak.
+This does not claim promises/jobs, modules, broad Test262 compatibility,
+Windows/macOS packages or a stable 1.0 ABI.
+
+The next evidence checkpoints are deliberately split:
+
+1. **PC0V - external Valgrind confirmation:** DeepSeek should later run the
+   frozen embedded host plus lifecycle, VM and heap gates under Valgrind on
+   Nick's Ubuntu machine. Record the Valgrind/compiler versions, exact commit,
+   commands, exit codes, definite/indirect/possible loss summaries and error
+   count. Investigate product findings; do not add suppressions merely to obtain
+   green output.
+2. **PC0P - second-platform package evidence:** JS++ currently has no GitHub CI
+   workflow and only Linux packaging is qualified. A future authorized task
+   should add at least Ubuntu and macOS public-header build/test/package
+   consumers, with Windows treated as a separate ABI-porting decision rather
+   than silently implied.
+3. **EP6A - selected Test262 harness:** pin an upstream revision and licence;
+   implement supported, unsupported, harness-inapplicable, fail, crash and
+   timeout classifications; begin with the already documented embedded subset.
+4. **Embedding trials:** exercise real small C/C++ hosts against installed
+   packages and classify API, ownership, diagnostics and capability gaps.
+5. **Decision gate:** use the conformance and host evidence to choose between
+   jobs/promises, modules or another compatibility slice. Do not choose from
+   feature prestige alone.
+
+PC0V is pending because this managed runner has no Valgrind and LeakSanitizer
+cannot operate under ptrace. It is not recorded as passed or failed. Nick will
+push the current commits; Codex must not push, tag or release unless separately
+authorized. Keep the TSCC dependency boundary test-only unless a later concrete,
+bounded compiler feature justifies optional embedding.
