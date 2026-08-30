@@ -349,3 +349,9 @@ result; user data remains host-owned. Same-thread re-entry defers collection so
 the outer VM remains rooted. Callback failures become JS TypeErrors, uncaught JS
 errors retain located stack text, and `js_runtime_get_exception` returns the
 thrown value. The independent corpus is 168/168.
+
+## Post-EP2 order decision (2026-08-30)
+
+Next is EP3 containment, then EP4 packaging/ABI, then EP5 candidate evidence.
+Do not start promises/modules merely to increase language breadth before the
+embedding safety and distribution contract closes.

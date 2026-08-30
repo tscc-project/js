@@ -73,5 +73,13 @@ evaluate successfully afterward; then release everything under ASan and UBSan.
 6. **EP5 - preview candidate:** run the frozen demonstration, regression corpus,
    selected conformance slice, sanitizer/fuzz/soak gates and publish exact limits.
 
-EP0 comes next. It may split later checkpoints, but it may not weaken the exit
+EP0 is frozen. Later checkpoints may split, but may not weaken the exit
 demonstration without recording the evidence that forced the change.
+
+## Reassessment after EP0-EP2
+
+Calls/callbacks are no longer the preview blocker. Proceed with EP3 containment
+before packaging: the hard-coded instruction budget needs a public per-runtime
+contract, heap/allocation limits need deterministic failure, and both must prove
+recovery and re-entry safety. EP4 then packages the stabilized API. EP5 runs the
+candidate evidence rather than adding another broad language family.
