@@ -386,3 +386,11 @@ consumers and ASan/UBSan pass. LeakSanitizer cannot run under the managed ptrace
 runner and remains an explicit external confirmation before a broader release.
 Exact evidence and exclusions are in
 `docs/evidence/embedded-preview-candidate.json`.
+
+## Post-preview reassessment (2026-08-30)
+
+The next order is PC0 external leak/Valgrind plus a second-platform package check,
+then EP6 a pinned selected Test262/conformance harness, then real embedding-host
+trials. Only after those results should the engine choose between jobs/promises,
+modules or another compatibility slice. The embedded preview is complete enough
+to gather evidence instead of extending the contract indefinitely.
