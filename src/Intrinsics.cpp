@@ -1,4 +1,5 @@
 #include "Intrinsics.h"
+#include "Property.h"
 #include "Conversion.h"
 #include <algorithm>
 #include <cmath>
@@ -11,7 +12,7 @@ js_value boolean_value(bool boolean){js_value value;value.kind=JS_VALUE_BOOLEAN;
 js_value undefined_value(){return {};}
 bool object_value(const js_value&value,std::shared_ptr<ObjectValue>&object){if(value.kind==JS_VALUE_OBJECT&&value.object){object=value.object;return true;}return false;}
 bool own(const std::shared_ptr<ObjectValue>&object,const std::string&name,js_value&value){auto found=object->properties.find(name);if(found==object->properties.end())return false;value=found->second;return true;}
-bool property_maps(const js_value&value,std::unordered_map<std::string,js_value>*&properties,std::unordered_map<std::string,PropertyAttributes>*&attributes){if(value.kind==JS_VALUE_OBJECT&&value.object){properties=&value.object->properties;attributes=&value.object->attributes;return true;}if(value.kind==JS_VALUE_ARRAY&&value.array){properties=&value.array->properties;attributes=&value.array->attributes;return true;}if(value.kind==JS_VALUE_FUNCTION&&value.function){properties=&value.function->properties;attributes=&value.function->attributes;return true;}return false;}
+bool property_maps(const js_value&value,std::unordered_map<std::string,js_value>*&properties,std::unordered_map<std::string,PropertyAttributes>*&attributes){auto maps=own_property_maps(value);properties=maps.values;attributes=maps.attributes;return static_cast<bool>(maps);}
 }
 
 js_value make_native(Heap&heap,const std::string&name,std::size_t length,bool constructible,

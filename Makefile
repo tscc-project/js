@@ -32,7 +32,7 @@ $(HEAP_OBJECT): src/Heap.cpp src/VM.h src/Runtime.h | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
 $(CONVERSION_OBJECT): src/Conversion.cpp src/Conversion.h src/Runtime.h src/VM.h | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
-$(INTRINSICS_OBJECT): src/Intrinsics.cpp src/Intrinsics.h src/VM.h src/Runtime.h | $(BUILD)
+$(INTRINSICS_OBJECT): src/Intrinsics.cpp src/Intrinsics.h src/Property.h src/VM.h src/Runtime.h | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
 $(STATIC): $(LIB_OBJECTS)
 	$(AR) rcs $@ $^

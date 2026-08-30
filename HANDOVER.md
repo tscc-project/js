@@ -286,3 +286,11 @@ become catchable TypeError objects; invalid Array lengths become RangeError,
 with deterministic initial stack text and identity preserved across rethrow.
 The corpus is 158/158. Source-position stack frames and a general VM-wide
 throwing error factory remain future work.
+
+## JS10G internal property operations (2026-08-30)
+
+Object, array and function descriptor storage now enters reflection through one
+`PropertyMaps` abstraction with shared own lookup, definition and key ordering
+operations. VM unit evidence pins value/attribute pairing and enumerable-key
+selection; the external corpus remains 158/158. Indexed array descriptors and
+full exotic-object invariants remain deferred.
