@@ -340,3 +340,12 @@ Intl and browser/Node APIs are explicitly excluded.
 object and array access. Every returned `js_value **` is an owning runtime handle;
 inputs must be live handles owned by that runtime. Accessors/prototype traversal
 remain language-side paths until EP2 exposes common calls safely.
+
+## EP2 calls, callbacks and exceptions (2026-08-30)
+
+`js_call` invokes JS or native functions through the ordinary VM call path.
+Native callbacks receive borrowed receiver/arguments and transfer one owned
+result; user data remains host-owned. Same-thread re-entry defers collection so
+the outer VM remains rooted. Callback failures become JS TypeErrors, uncaught JS
+errors retain located stack text, and `js_runtime_get_exception` returns the
+thrown value. The independent corpus is 168/168.

@@ -26,10 +26,11 @@ while the remaining preview surface is designed.
 ### Host bridge
 
 EP1 adds deliberate APIs for creating primitive values, constructing objects and
-arrays, and reading/writing own data properties/elements. The preview must still
-add JavaScript calls and native callbacks with host data. Callback re-entry,
-retained handles and native-to-JS exception propagation need explicit ownership
-and rooting rules.
+arrays, and reading/writing own data properties/elements. EP2 adds host-to-JS
+calls, native callbacks with host data, same-thread re-entry, transferred callback
+results, callback errors and retrievable JavaScript exceptions. Callback arguments
+are borrowed for the call; a successful callback transfers one owning result
+handle to the engine.
 
 ### Containment
 

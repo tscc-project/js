@@ -15,4 +15,8 @@ struct js_runtime {
  std::shared_ptr<jspp::Heap> heap;
  std::shared_ptr<jspp::Environment> global;
  std::vector<js_value> intrinsic_roots;
+ std::size_t evaluation_depth=0;
+ std::size_t host_sequence=0;
+ js_value last_exception;
+ bool has_exception=false;
 };

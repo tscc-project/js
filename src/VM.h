@@ -23,10 +23,12 @@ public:
  std::shared_ptr<ObjectValue>object();std::shared_ptr<ArrayValue>array();
  std::size_t allocations()const{return allocations_;}std::size_t tracked()const;
  std::size_t collect(const std::vector<js_value>&roots,const std::vector<std::shared_ptr<Environment>>&environment_roots={});
- bool collection_due()const{return allocations_>=next_collection_;}
+ bool collection_due()const{return collection_blocks_==0&&allocations_>=next_collection_;}
+ void block_collection(){++collection_blocks_;}
+ void unblock_collection(){if(collection_blocks_)--collection_blocks_;}
  std::size_t collections()const{return collections_;}
 private:
- std::size_t allocations_=0,next_collection_=64,collections_=0;bool collecting_=false;std::vector<std::weak_ptr<Environment>>environments_;
+ std::size_t allocations_=0,next_collection_=64,collections_=0,collection_blocks_=0;bool collecting_=false;std::vector<std::weak_ptr<Environment>>environments_;
  std::vector<std::weak_ptr<FunctionObject>>functions_;std::vector<std::weak_ptr<ObjectValue>>objects_;
  std::vector<std::weak_ptr<ArrayValue>>arrays_;
 };

@@ -29,11 +29,18 @@ typedef enum js_value_kind {
     JS_VALUE_NUMBER=3, JS_VALUE_STRING=4, JS_VALUE_FUNCTION=5,
     JS_VALUE_OBJECT=6, JS_VALUE_ARRAY=7
 } js_value_kind;
+typedef js_status (*js_native_callback)(js_runtime *runtime,
+    const js_value *this_value,const js_value *const *arguments,size_t argument_count,
+    void *user_data,js_value **result);
+/* Native callback arguments are borrowed; a successful result transfers one
+   owning handle to the engine. */
 
 JS_API const char *js_version(void);
 JS_API js_runtime *js_runtime_new(void);
 JS_API void js_runtime_free(js_runtime *runtime);
 JS_API const char *js_runtime_last_error(const js_runtime *runtime);
+JS_API void js_runtime_set_error(js_runtime *runtime,const char *message);
+JS_API js_status js_runtime_get_exception(js_runtime *runtime,js_value **result);
 JS_API js_status js_eval(js_runtime *runtime,const char *source,js_value **result);
 JS_API void js_value_free(js_runtime *runtime,js_value *value);
 JS_API js_value_kind js_value_get_kind(const js_value *value);
@@ -54,6 +61,10 @@ JS_API js_status js_object_get(js_runtime *runtime,const js_value *object,const 
 JS_API js_status js_array_set(js_runtime *runtime,js_value *array,size_t index,const js_value *value);
 JS_API js_status js_array_get(js_runtime *runtime,const js_value *array,size_t index,js_value **result);
 JS_API js_status js_array_get_length(js_runtime *runtime,const js_value *array,size_t *length);
+JS_API js_status js_function_new_native(js_runtime *runtime,const char *name,size_t name_size,
+    js_native_callback callback,void *user_data,js_value **result);
+JS_API js_status js_call(js_runtime *runtime,const js_value *function,const js_value *this_value,
+    const js_value *const *arguments,size_t argument_count,js_value **result);
 
 #ifdef __cplusplus
 }
