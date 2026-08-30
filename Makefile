@@ -24,7 +24,7 @@ STATIC := $(BUILD)/libjs.a
 SHARED_REAL := $(BUILD)/libjs.so.$(ABI_MAJOR)
 SHARED := $(BUILD)/libjs.so
 
-.PHONY: all test test-unit test-regression test-preview-contract test-heap test-sanitize install package-test clean
+.PHONY: all test test-unit test-regression test-preview-contract test-heap test-sanitize install package-test test-preview-candidate clean
 all: $(CLI) $(STATIC) $(SHARED)
 $(BUILD):
 	mkdir -p $(BUILD)
@@ -81,13 +81,15 @@ install: all
 	sed 's|@PREFIX@|$(PREFIX)|g' packaging/JSppConfig.cmake.in > "$(DESTDIR)$(LIBDIR)/cmake/JSpp/JSppConfig.cmake"
 package-test: all
 	bash tests/package.sh
+test-preview-candidate: test package-test test-sanitize
+	bash tests/preview_candidate.sh
 test-sanitize:
 	mkdir -p $(BUILD)/san
 	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/lifecycle.cpp src/Runtime.cpp src/Frontend.cpp src/Bytecode.cpp src/VM.cpp src/Heap.cpp src/Conversion.cpp src/Intrinsics.cpp -pthread -o $(BUILD)/san/lifecycle
 	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/frontend.cpp src/Frontend.cpp -o $(BUILD)/san/frontend
 	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/vm.cpp src/Runtime.cpp src/Frontend.cpp src/Bytecode.cpp src/VM.cpp src/Heap.cpp src/Conversion.cpp src/Intrinsics.cpp -pthread -o $(BUILD)/san/vm
-	ASAN_OPTIONS="$${ASAN_OPTIONS:-detect_leaks=1:halt_on_error=1}" UBSAN_OPTIONS=halt_on_error=1 ./$(BUILD)/san/lifecycle
-	ASAN_OPTIONS="$${ASAN_OPTIONS:-detect_leaks=1:halt_on_error=1}" UBSAN_OPTIONS=halt_on_error=1 ./$(BUILD)/san/frontend
-	ASAN_OPTIONS="$${ASAN_OPTIONS:-detect_leaks=1:halt_on_error=1}" UBSAN_OPTIONS=halt_on_error=1 ./$(BUILD)/san/vm
+	ASAN_OPTIONS="$${ASAN_OPTIONS:-detect_leaks=0:halt_on_error=1}" UBSAN_OPTIONS=halt_on_error=1 ./$(BUILD)/san/lifecycle
+	ASAN_OPTIONS="$${ASAN_OPTIONS:-detect_leaks=0:halt_on_error=1}" UBSAN_OPTIONS=halt_on_error=1 ./$(BUILD)/san/frontend
+	ASAN_OPTIONS="$${ASAN_OPTIONS:-detect_leaks=0:halt_on_error=1}" UBSAN_OPTIONS=halt_on_error=1 ./$(BUILD)/san/vm
 clean:
 	rm -rf $(BUILD)

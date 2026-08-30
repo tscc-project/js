@@ -49,6 +49,8 @@ JS_API void js_runtime_free(js_runtime *runtime);
 JS_API const char *js_runtime_last_error(const js_runtime *runtime);
 JS_API void js_runtime_set_error(js_runtime *runtime,const char *message);
 JS_API js_status js_runtime_get_exception(js_runtime *runtime,js_value **result);
+JS_API js_status js_runtime_set_global(js_runtime *runtime,const char *name,size_t name_size,const js_value *value);
+JS_API js_status js_runtime_get_global(js_runtime *runtime,const char *name,size_t name_size,js_value **result);
 JS_API js_status js_runtime_set_instruction_limit(js_runtime *runtime,size_t limit);
 JS_API js_status js_runtime_set_stack_limit(js_runtime *runtime,size_t limit);
 JS_API js_status js_runtime_set_allocation_limit(js_runtime *runtime,size_t limit);

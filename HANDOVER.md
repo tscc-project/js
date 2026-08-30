@@ -373,3 +373,16 @@ version script exports only versioned `js_*` symbols. `make package-test`
 installs into an isolated prefix and compiles a C static consumer and C++ shared
 consumer from public files. Windows/macOS packaging remains outside this initial
 Linux preview contract.
+
+## EP5 embedded preview candidate (2026-08-30)
+
+The frozen C host now installs structured input and a native callback into the
+runtime global, executes closures and an array callback, inspects a JavaScript
+Error, contains an instruction failure, recovers and soaks 250 same-runtime
+evaluations. Host-created objects/arrays inherit the appropriate intrinsic
+prototype. The external corpus is 171/171; deterministic malformed-input fuzz is
+400/400 and fixed a trailing-unary parser null dereference. Static/shared package
+consumers and ASan/UBSan pass. LeakSanitizer cannot run under the managed ptrace
+runner and remains an explicit external confirmation before a broader release.
+Exact evidence and exclusions are in
+`docs/evidence/embedded-preview-candidate.json`.

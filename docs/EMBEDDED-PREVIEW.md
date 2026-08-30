@@ -84,3 +84,13 @@ Calls/callbacks, containment and the initial Linux distribution contract are
 closed. ABI 0.1 ships public-header static/shared consumption, SONAME 0,
 versioned public symbols, install rules and pkg-config/CMake metadata. EP5 now
 runs the candidate evidence rather than adding another broad language family.
+
+## EP5 candidate result
+
+The bounded Linux embedded preview is qualified at 171/171 external cases. Its
+frozen public-header C demonstration covers global injection, structured values,
+native calls, closures, array callbacks, Error retrieval, containment, recovery
+and a 250-evaluation soak. Package consumers, ASan/UBSan and 400 deterministic
+malformed mutations pass. LeakSanitizer requires confirmation outside the
+ptrace-managed runner. The preview remains synchronous, creator-thread confined
+and excludes the families listed in the contract manifest.

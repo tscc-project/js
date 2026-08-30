@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "candidate": "JS++ embedded preview",
+  "platform": "Linux x86_64",
+  "abi": "0.1",
+  "regression": {"pass": 171, "fail": 0, "skip": 0},
+  "selected_intersection": {"pass": 7, "fail": 0},
+  "fuzz_mutations": 400,
+  "soak_evaluations": 250,
+  "gates": ["frozen-host-demo", "public-c-static", "public-cpp-shared", "asan-ubsan", "deterministic-fuzz", "same-runtime-soak", "versioned-symbols"],
+  "external_confirmation": ["LeakSanitizer outside a ptrace-managed runner"],
+  "limitations": ["creator-thread synchronous API", "Linux initial package", "no promises/jobs", "no modules", "no proxies", "no typed arrays", "no weak references", "no Intl", "no browser or Node APIs"]
+}

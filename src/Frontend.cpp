@@ -49,7 +49,7 @@ std::unique_ptr<Expr>Parser::prefix(){
  if(t.text=="this"){++at_;auto e=std::make_unique<Expr>();e->kind=ExprKind::This;return e;}
  if(t.text=="new"){++at_;if(tokens_[at_].kind!=TokenKind::Identifier){fail(tokens_[at_],"expected constructor name");return nullptr;}auto e=std::make_unique<Expr>();e->kind=ExprKind::New;e->left=std::make_unique<Expr>();e->left->kind=ExprKind::Identifier;e->left->text=tokens_[at_++].text;if(!consume("(","expected '(' after constructor"))return nullptr;if(tokens_[at_].text!=")")for(;;){auto arg=expression();if(!arg)return nullptr;e->arguments.push_back(std::move(arg));if(tokens_[at_].text!=",")break;++at_;}if(!consume(")","expected ')' after constructor arguments"))return nullptr;return e;}
  if(t.kind==TokenKind::Keyword&&(t.text=="true"||t.text=="false"||t.text=="null"||t.text=="undefined")){++at_;auto e=std::make_unique<Expr>();e->kind=t.text=="true"||t.text=="false"?ExprKind::Boolean:t.text=="null"?ExprKind::Null:ExprKind::Undefined;e->text=t.text;return e;}
- if(t.text=="+"||t.text=="-"||t.text=="!"){++at_;auto e=std::make_unique<Expr>();e->kind=ExprKind::Unary;e->text=t.text;e->right=prefix();if(!e->right)fail(tokens_[at_],"expected expression after unary operator");return e;}
+ if(t.text=="+"||t.text=="-"||t.text=="!"){++at_;auto e=std::make_unique<Expr>();e->kind=ExprKind::Unary;e->text=t.text;e->right=prefix();if(!e->right){fail(tokens_[at_],"expected expression after unary operator");return nullptr;}return e;}
  if(t.text=="("){++at_;auto e=expression();if(!e||!consume(")","expected ')'"))return nullptr;return e;}fail(t,"expected expression");return nullptr;
 }
 std::unique_ptr<Expr>Parser::binary(int min){
