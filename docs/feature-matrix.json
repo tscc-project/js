@@ -105,7 +105,7 @@
     },
     {
       "id": "exceptions",
-      "checkpoint": "JS10H",
+      "checkpoint": "JS10J",
       "status": {
         "tokenize": "implemented",
         "parse": "tested",

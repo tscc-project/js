@@ -310,3 +310,12 @@ arrays and functions now share `named_property_get/set`. VM call-method,
 conversion, get and set paths all use that boundary; array indices/length,
 function prototype and primitive strings remain explicit exotic operations.
 Four accessor cases raise the corpus to 164/164.
+
+## JS10J bytecode locations and diagnostic stacks (2026-08-30)
+
+Statements retain lexer line/column origins and every emitted instruction gains
+a stable source location, visible in disassembly. Error frames now include
+`<eval>:line:column` for native and propagating JavaScript calls. Two multiline
+cases raise the corpus to 166/166. Filenames, expression-precise columns, source
+maps and async stacks remain deferred. Runtime object dependencies now include
+the transitive frontend/bytecode headers to prevent mixed-layout partial links.

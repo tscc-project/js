@@ -69,6 +69,7 @@ std::unique_ptr<Expr>Parser::expression(){return assignment();}
 bool Parser::parenthesized(std::unique_ptr<Expr>&e){return consume("(","expected '('")&&(e=expression())&&consume(")","expected ')'");}
 bool Parser::declaration(Statement&s,bool semi){s.kind=StatementKind::Declaration;s.constant=tokens_[at_].text=="const";++at_;if(tokens_[at_].kind!=TokenKind::Identifier)return fail(tokens_[at_],"expected binding name");s.name=tokens_[at_++].text;if(!consume("=","declarations require an initializer"))return false;s.expression=expression();return s.expression&&(!semi||consume(";","expected ';' after declaration"));}
 bool Parser::statement(Statement&s){
+ s.line=tokens_[at_].line;s.column=tokens_[at_].column;
  const auto&t=tokens_[at_];if(t.text==";"){++at_;s.kind=StatementKind::Empty;return true;}
  if(t.text=="{"){++at_;s.kind=StatementKind::Block;while(tokens_[at_].kind!=TokenKind::End&&tokens_[at_].text!="}"){Statement x;if(!statement(x))return false;s.body.push_back(std::move(x));}return consume("}","expected '}'");}
  if(t.text=="function"){s.kind=StatementKind::FunctionDeclaration;s.expression=function_expression();if(!s.expression)return false;if(s.expression->text.empty())return fail(t,"function declaration requires a name");s.name=s.expression->text;return true;}

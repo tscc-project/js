@@ -13,6 +13,7 @@ struct Expr { ExprKind kind=ExprKind::Undefined;std::string text;double number=0
 enum class StatementKind { Declaration,Expression,Block,If,While,For,Break,Continue,Return,Throw,Try,FunctionDeclaration,Empty };
 struct Statement {
  StatementKind kind=StatementKind::Expression;bool constant=false;std::string name;
+ std::size_t line=1,column=1;
  std::unique_ptr<Expr>expression,condition,update;
  std::unique_ptr<Statement>initializer,then_branch,else_branch,try_branch,catch_branch,finally_branch;
  std::string catch_name;

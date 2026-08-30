@@ -20,7 +20,7 @@ SHARED := $(BUILD)/libjs.so
 all: $(CLI) $(STATIC) $(SHARED)
 $(BUILD):
 	mkdir -p $(BUILD)
-$(OBJECT): src/Runtime.cpp src/Runtime.h include/js.h src/Version.h | $(BUILD)
+$(OBJECT): src/Runtime.cpp src/Runtime.h src/Frontend.h src/Bytecode.h src/VM.h include/js.h src/Version.h | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
 $(FRONTEND_OBJECT): src/Frontend.cpp src/Frontend.h | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@

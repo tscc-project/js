@@ -2,6 +2,11 @@
 #include "VM.h"
 
 namespace jspp {
+inline std::string source_frame(const std::string& name, std::size_t line, std::size_t column) {
+    auto frame=name.empty()?std::string("<anonymous>"):name;
+    if(line)frame+=" (<eval>:"+std::to_string(line)+":"+std::to_string(column)+")";
+    return frame;
+}
 inline js_value error_object(Heap& heap, const std::string& name,
                              const std::string& message,
                              const std::shared_ptr<ObjectValue>& prototype = {},
