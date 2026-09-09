@@ -34,23 +34,26 @@ later ordering changes when runtime and conformance evidence justifies it.
    thresholds, active stack/environment roots, compaction and re-entry guards.
 12. **JS8A - explicit throw — completed 2026-08-30:** parser, bytecode,
     scope-unwind and call propagation for uncaught primitive throws.
-13. **JS8B - handlers:** try/catch/finally, completion interaction, native
-   propagation, reporting, and stacks.
-10. **JS9 - conversions/built-ins:** centralized coercions and foundational
-    Object, Array, String, Number, Boolean, Math, JSON, and Error families.
-11. **JS10 - native embedding:** persistent handles, functions, arguments,
-    properties, exceptions, user data, finalizers, and safe re-entry.
-12. **JS11 - jobs/promises:** host-drained jobs, promises/reactions, then async
+13. **JS8B-JS8F - handlers and finally — completed 2026-08-30:** explicit
+    completions, protected handler and cleanup regions, `try`/`catch`/`finally`,
+    unwinding and completion replacement.
+14. **JS9A - conversions — completed 2026-08-30:** centralized primitive and
+    object conversions, equality, ordering and property-key semantics.
+15. **JS10A-JS10J - built-ins and native embedding — completed 2026-08-30:**
+    rooted intrinsics, Object/Function/Error/Array/String foundations,
+    descriptors/accessors, centralized errors, located stacks, host values,
+    callbacks, globals, containment and recovery through public ABI 0.1.
+16. **JS11 - jobs/promises:** host-drained jobs, promises/reactions, then async
     functions; host facilities remain external.
-13. **JS12 - modules:** parsing, records, linking, cycles, live bindings, host
+17. **JS12 - modules:** parsing, records, linking, cycles, live bindings, host
     resolver hooks, then dynamic import.
-14. **JS13 - broader ECMAScript:** classes, destructuring, spread/rest,
+18. **JS13 - broader ECMAScript:** classes, destructuring, spread/rest,
     generators/iterators, symbols, collections, regex, typed arrays, dates, and
     remaining modern families as vertical slices.
-15. **JS14 - conformance/hardening:** selected Test262, explicit classifications,
+19. **JS14 - conformance/hardening:** selected Test262, explicit classifications,
     fuzzing, memory/performance, and supported-platform evidence.
-16. **JS15 - packaging/releases:** CLI and libraries, pkg-config/CMake metadata,
-    ABI policy, installers, release automation, examples, and truthful docs.
+20. **JS15 - packaging/releases:** supported-platform CLI and libraries, ABI
+    policy, installers, release automation, examples, and truthful docs.
 
 Integration begins after the primitive engine is useful: dual-runtime tscc tests,
 independent parsing of tscc output, a shared emitted-JavaScript corpus, then a
