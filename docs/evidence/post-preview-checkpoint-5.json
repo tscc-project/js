@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "checkpoint": "post-preview-checkpoint-5",
+  "date": "2026-09-09",
+  "candidate": {
+    "repository": "js",
+    "commit": "38603fb35e1619070d86fa9b2d303ab95ab14f41",
+    "version": "0.0.0-dev",
+    "api_version": "0.1"
+  },
+  "external_contract": {
+    "repository": "js-regression-suite",
+    "commit": "49e5d68d0dac93d47ac077f31c2d080979e089d2",
+    "pass": 171,
+    "fail": 0,
+    "skip": 0
+  },
+  "environment": {
+    "platform": "Linux x86_64",
+    "compiler": "g++ 13.3.0",
+    "python": "3.12.13"
+  },
+  "gates": {
+    "live_tree_aggregate": "pass",
+    "frontend_lifecycle_vm_heap": "pass",
+    "static_shared_c_cpp_consumers": "pass",
+    "asan_ubsan": "pass",
+    "deterministic_mutations": 400,
+    "embedded_preview_host_and_soak": "pass",
+    "committed_archive_aggregate": "pass",
+    "committed_archive_consumers": "pass",
+    "committed_archive_asan_ubsan": "pass",
+    "committed_archive_fuzz_and_soak": "pass"
+  },
+  "notes": [
+    "PC0V external Valgrind confirmation and PC0P second-platform package evidence remain separate pending checkpoints.",
+    "EP6A selected Test262 infrastructure remains the next engine evidence campaign."
+  ]
+}

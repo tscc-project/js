@@ -431,3 +431,13 @@ cannot operate under ptrace. It is not recorded as passed or failed. Nick will
 push the current commits; Codex must not push, tag or release unless separately
 authorized. Keep the TSCC dependency boundary test-only unless a later concrete,
 bounded compiler feature justifies optional embedding.
+
+## Post-preview retained baseline (2026-09-09)
+
+Checkpoint 5 reran JS++ at `38603fb` with suite `49e5d68`: 171 pass, zero
+fail and zero skip. Frontend, lifecycle, VM, traced heap, static/shared C and C++
+installed consumers, ASan/UBSan, 400 deterministic mutations and the frozen
+embedded-host soak passed. A fresh sibling `git archive` export independently
+rebuilt and passed the same aggregate, consumer, sanitizer, fuzz and soak gates.
+Exact evidence is retained in `docs/evidence/post-preview-checkpoint-5.json`;
+PC0V, PC0P and EP6A remain pending rather than implied by this result.
