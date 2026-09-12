@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "checkpoint": "post-preview-pc0v",
+  "date": "2026-09-13",
+  "candidate": {
+    "repository": "js",
+    "commit": "15df1132b801a4f18b2f1119534ca70d6ca90d35",
+    "version": "0.0.0-dev",
+    "api_version": "0.1"
+  },
+  "external_contract": {
+    "repository": "js-regression-suite",
+    "commit": "49e5d68d0dac93d47ac077f31c2d080979e089d2",
+    "pass": 171,
+    "fail": 0,
+    "skip": 0
+  },
+  "environment": {
+    "platform": "Linux 7.0.0-29-generic x86_64",
+    "compiler": "c++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+    "valgrind": "valgrind-3.26.0",
+    "python": "3.14.4"
+  },
+  "lifetime_fix": {
+    "commit": "15df1132b801a4f18b2f1119534ca70d6ca90d35",
+    "summary": "execute_completion now sweeps a call-local Heap exactly once on every exit from run(), rooting only Completion.value. The top-level execution environment is not a root, so environment<->declared-function cycles are reclaimed on success and failure paths alike. Caller-supplied heaps are never swept at exit; the caller owns all roots and collection, so runtime embedding behaviour is unchanged.",
+    "contract": "docs/handover/ARCHITECTURE.md#standalone-execution-lifetime-contract"
+  },
+  "valgrind_workloads": [
+    { "workload": "lifecycle", "command": "./build/lifecycle", "exit": 0, "errors": 0, "leak_summary": "0 bytes in use at exit", "pass": true },
+    { "workload": "heap", "command": "./build/heap", "exit": 0, "errors": 0, "leak_summary": "0 bytes in use at exit", "pass": true },
+    { "workload": "vm", "command": "./build/vm", "exit": 0, "errors": 0, "leak_summary": "0 bytes in use at exit", "pass": true },
+    { "workload": "frozen embedded host", "command": "./build/embedded-preview", "exit": 0, "errors": 0, "leak_summary": "0 bytes in use at exit", "pass": true },
+    { "workload": "standalone lifetime regression", "command": "./build/standalone-lifetime", "exit": 0, "errors": 0, "leak_summary": "0 bytes in use at exit", "pass": true }
+  ],
+  "gates": {
+    "live_tree_aggregate": "pass",
+    "frontend_lifecycle_vm_heap_standalone_lifetime": "pass",
+    "independent_regression_suite": "171 pass / 0 fail / 0 skip",
+    "embedded_preview_candidate_gate": "pass",
+    "static_shared_c_cpp_consumers": "pass",
+    "asan_ubsan": "pass",
+    "lsan": "pass",
+    "deterministic_mutations": 400,
+    "embedded_preview_host_and_soak": "pass"
+  },
+  "notes": [
+    "Discovery evidence for the pre-fix standalone VM leak is retained as docs/evidence/memory-safety/post-preview-pc0v-vm-valgrind-fail.json plus the raw full log; the leak is not rewritten into a pass.",
+    "Post-fix Valgrind pass evidence is recorded per workload under docs/evidence/memory-safety/ with -pass suffixes at commit 15df113.",
+    "Contract boundary: a heap-backed completion value returned from local-heap execution is transferred as an owning shared_ptr and remains valid when its reachable value graph is acyclic; a self-referential returned graph (a closure capturing an environment that references it back) requires a caller-owned Heap. This is documented, not silently weakened.",
+    "PC0V is complete only at the tested JS++ commit 15df113 and TSCC commit 1bc3047; PC0P second-platform packaging remains pending."
+  ]
+}

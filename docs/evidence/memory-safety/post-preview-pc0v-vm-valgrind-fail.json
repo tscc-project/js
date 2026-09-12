@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "project": "jspp",
+  "commit": "8fbad86a49123d973e5f61fbaf09fe5e92abd991",
+  "timestamp_utc": "2026-09-12T16:43:36.404998+00:00",
+  "platform": {
+    "system": "Linux",
+    "release": "7.0.0-29-generic",
+    "machine": "x86_64",
+    "python": "3.14.4"
+  },
+  "toolchain": {
+    "compiler": "c++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+    "valgrind": "valgrind-3.26.0",
+    "time": "/usr/bin/time"
+  },
+  "mode": "valgrind",
+  "command": [
+    "./build/vm"
+  ],
+  "warmup_iterations": 0,
+  "requested_iterations": 1,
+  "requested_duration_seconds": 0.0,
+  "runs": [
+    {
+      "kind": "measured",
+      "index": 1,
+      "exit_status": 99,
+      "elapsed_seconds": 0.867231,
+      "peak_rss_kib": 161584,
+      "findings": [
+        "valgrind_error",
+        "valgrind_leak"
+      ],
+      "stdout_tail": "JS++ functions/closures VM passed",
+      "stderr_tail": "==2446675== \n==2446675== 1,600 (88 direct, 1,512 indirect) bytes in 1 blocks are definitely lost in loss record 8 of 8\n==2446675==    at 0x48ADFD3: operator new(unsigned long) (vg_replace_malloc.c:488)\n==2446675==    by 0x403DE8F: jspp::Heap::environment() (in /home/nick/Repositories/tscc/js/build/vm)\n==2446675==    by 0x4035F45: jspp::execute_completion(jspp::Bytecode const&, jspp::Completion&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, unsigned long, jspp::Heap*, std::shared_ptr<jspp::Environment>, unsigned long) (in /home/nick/Repositories/tscc/js/build/vm)\n==2446675==    by 0x400AA6B: main (in /home/nick/Repositories/tscc/js/build/vm)\n==2446675== \n==2446675== LEAK SUMMARY:\n==2446675==    definitely lost: 88 bytes in 1 blocks\n==2446675==    indirectly lost: 1,512 bytes in 7 blocks\n==2446675==      possibly lost: 0 bytes in 0 blocks\n==2446675==    still reachable: 0 bytes in 0 blocks\n==2446675==         suppressed: 0 bytes in 0 blocks\n==2446675== \n==2446675== For lists of detected and suppressed errors, rerun with: -s\n==2446675== ERROR SUMMARY: 8 errors from 8 contexts (suppressed: 0 from 0)\nCommand exited with non-zero status 99\n\tCommand being timed: \"/usr/bin/valgrind --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=definite,indirect,possible --track-origins=yes --error-exitcode=99 ./build/vm\"\n\tUser time (seconds): 0.78\n\tSystem time (seconds): 0.06\n\tPercent of CPU this job got: 98%\n\tElapsed (wall clock) time (h:mm:ss or m:ss): 0:00.86\n\tAverage shared text size (kbytes): 0\n\tAverage unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 161584\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 1\n\tMinor (reclaiming a frame) page faults: 42754\n\tVoluntary context switches: 2\n\tInvoluntary context switches: 5\n\tSwaps: 0\n\tFile system inputs: 32\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 99"
+    }
+  ],
+  "summary": {
+    "completed_iterations": 1,
+    "duration_seconds": 0.867231,
+    "peak_rss_kib": 161584,
+    "rss_samples_kib": [
+      161584
+    ],
+    "findings": [
+      "valgrind_error",
+      "valgrind_leak"
+    ],
+    "pass": false,
+    "note": "RSS samples are process-level observations, not a leak oracle. Long-run settled-memory analysis is workload-specific."
+  }
+}
