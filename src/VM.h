@@ -35,6 +35,19 @@ private:
 };
 enum class CompletionKind { Normal,Return,Throw,Break,Continue };
 struct Completion { CompletionKind kind=CompletionKind::Normal;js_value value;std::size_t target=0,target_scope=0; };
+// Standalone execution lifetime contract (PC0V fix):
+// - With heap==nullptr, execute_completion owns a call-local Heap. On every exit
+//   from run() (normal, throw, malformed bytecode, limit failures, escaped
+//   return) it sweeps the heap exactly once, rooting only Completion.value. The
+//   top-level execution environment is not a root, so environment<->declared-
+//   function cycles are reclaimed before the local Heap is destroyed. A returned
+//   heap-backed value is transferred to the caller as an owning shared_ptr and
+//   remains valid after the call if its reachable graph is acyclic; self-
+//   referential returned graphs require a caller-owned Heap (see ARCHITECTURE.md).
+// - With heap!=nullptr, no collection is performed here: the caller owns all
+//   roots and drives collection. The runtime embedding path uses this rule and
+//   collects after each evaluation, so returned results stay reachable until the
+//   caller frees their handles and invokes collection.
 bool execute_completion(const Bytecode&,Completion&,std::string&error,std::size_t instruction_budget=1000000,Heap*heap=nullptr,std::shared_ptr<Environment>global={},std::size_t stack_limit=512);
 bool execute(const Bytecode&,js_value&,std::string&error,std::size_t instruction_budget=1000000,Heap*heap=nullptr,std::shared_ptr<Environment>global={},std::size_t stack_limit=512);
 }

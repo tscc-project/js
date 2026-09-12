@@ -58,13 +58,16 @@ $(BUILD)/vm: tests/vm.cpp $(STATIC)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tests/vm.cpp $(STATIC) -pthread -o $@
 $(BUILD)/heap: tests/heap.cpp $(STATIC)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tests/heap.cpp $(STATIC) -pthread -o $@
+$(BUILD)/standalone-lifetime: tests/standalone_lifetime.cpp $(STATIC)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tests/standalone_lifetime.cpp $(STATIC) -pthread -o $@
 test-heap: $(BUILD)/heap
 	./$(BUILD)/heap
-test-unit: $(CLI) $(BUILD)/lifecycle $(BUILD)/frontend $(BUILD)/vm test-heap
+test-unit: $(CLI) $(BUILD)/lifecycle $(BUILD)/frontend $(BUILD)/vm test-heap $(BUILD)/standalone-lifetime
 	test "$$($(CLI) --version)" = "JS++ 0.0.0-dev"
 	./$(BUILD)/lifecycle
 	./$(BUILD)/frontend
 	./$(BUILD)/vm
+	./$(BUILD)/standalone-lifetime
 test-regression: all
 	python3 ../js-regression-suite/run.py --js "$(abspath $(CLI))" --include "$(abspath include)" --library "$(abspath $(STATIC))"
 test-preview-contract:
@@ -88,8 +91,10 @@ test-sanitize:
 	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/lifecycle.cpp src/Runtime.cpp src/Frontend.cpp src/Bytecode.cpp src/VM.cpp src/Heap.cpp src/Conversion.cpp src/Intrinsics.cpp -pthread -o $(BUILD)/san/lifecycle
 	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/frontend.cpp src/Frontend.cpp -o $(BUILD)/san/frontend
 	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/vm.cpp src/Runtime.cpp src/Frontend.cpp src/Bytecode.cpp src/VM.cpp src/Heap.cpp src/Conversion.cpp src/Intrinsics.cpp -pthread -o $(BUILD)/san/vm
+	$(CXX) $(CPPFLAGS) -std=c++17 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -Wall -Wextra -pedantic tests/standalone_lifetime.cpp src/Runtime.cpp src/Frontend.cpp src/Bytecode.cpp src/VM.cpp src/Heap.cpp src/Conversion.cpp src/Intrinsics.cpp -pthread -o $(BUILD)/san/standalone-lifetime
 	ASAN_OPTIONS="$${ASAN_OPTIONS:-detect_leaks=0:halt_on_error=1}" UBSAN_OPTIONS=halt_on_error=1 ./$(BUILD)/san/lifecycle
 	ASAN_OPTIONS="$${ASAN_OPTIONS:-detect_leaks=0:halt_on_error=1}" UBSAN_OPTIONS=halt_on_error=1 ./$(BUILD)/san/frontend
 	ASAN_OPTIONS="$${ASAN_OPTIONS:-detect_leaks=0:halt_on_error=1}" UBSAN_OPTIONS=halt_on_error=1 ./$(BUILD)/san/vm
+	ASAN_OPTIONS="$${ASAN_OPTIONS:-detect_leaks=0:halt_on_error=1}" UBSAN_OPTIONS=halt_on_error=1 ./$(BUILD)/san/standalone-lifetime
 clean:
 	rm -rf $(BUILD)

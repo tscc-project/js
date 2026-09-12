@@ -100,3 +100,34 @@ JS9A centralizes language conversion decisions in `Conversion`. VM opcodes no
 longer carry private truthiness, equality, numeric or property-key rules. The
 current ToPrimitive object fallback is deliberately bounded until native
 prototype methods and user-defined conversion hooks exist.
+
+## Standalone execution lifetime contract
+
+`execute_completion`/`execute` are the lower-level VM boundary used by focused
+bytecode tests and by the embedding runtime. They can run with an owned local
+heap or with a caller-supplied heap, and the ownership contract differs by case:
+
+- With `heap == nullptr` the call creates a call-local `Heap`. On every exit from
+  `run()` - normal completion, throw, malformed-bytecode rejection, instruction/
+  stack/allocation failure, or an escaped top-level return - the local heap is
+  swept exactly once, rooting only the returned `Completion.value`. The top-level
+  execution environment is deliberately not a root: it exists only for the
+  duration of the call, and this sweep reclaims transient environments, declared
+  functions, prototypes, nested bytecode and any reference cycle unreachable
+  from the returned value (including the environment -> declared-function ->
+  closure -> environment cycle). Repeated below-threshold executions therefore do
+  not accumulate retained cycles, and success and failure paths both clean up.
+- A heap-backed completion value returned from local-heap execution is
+  transferred to the caller as an owning `shared_ptr`. It remains valid after the
+  call even though the local heap is destroyed, provided its reachable value
+  graph contains no reference cycle (objects, arrays and closures that do not
+  capture a binding that references them back). A returned graph that is itself
+  self-referential (for example a closure capturing an environment that
+  references it) cannot be reclaimed without a live collector; callers that must
+  return such values must supply a caller-owned `Heap` and drive collection.
+- With a caller-supplied `Heap` no collection is performed at exit: the caller
+  owns every root (including live handles) and decides when to collect, so
+  reachable results remain valid until the caller releases them and invokes
+  collection. The runtime embedding path uses this rule: `js_eval` performs its
+  own post-evaluation collection over intrinsic, global and handle roots, keeping
+  embedding behaviour unchanged.
