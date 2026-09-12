@@ -406,12 +406,13 @@ Windows/macOS packages or a stable 1.0 ABI.
 
 The next evidence checkpoints are deliberately split:
 
-1. **PC0V - external Valgrind confirmation:** complete at JS++ `15df113` and
-   TSCC `1bc3047` (2026-09-13). The frozen embedded host, lifecycle, VM and heap
-   gates all pass under Valgrind 3.26.0 with zero errors and zero bytes in use
-   at exit. A standalone-execution lifetime defect found during the run was
-   fixed in `15df113`; discovery and post-fix evidence are retained under
-   `docs/evidence/memory-safety/`. PC0P second-platform packaging remains
+1. **PC0V - external Valgrind confirmation:** complete at JS++ `d35999f` and
+   TSCC `1bc3047` (2026-09-13) after a corrective ownership review. The frozen
+   embedded host, lifecycle, VM and heap gates all pass under Valgrind 3.26.0
+   with zero errors and zero bytes in use at exit. The initial candidate repair
+   (`15df113`) was reviewed and superseded by `d35999f`, which closes the two
+   ownership holes found in review; discovery and post-fix evidence are retained
+   under `docs/evidence/memory-safety/`. PC0P second-platform packaging remains
    pending.
 2. **PC0P - second-platform package evidence:** JS++ currently has no GitHub CI
    workflow and only Linux packaging is qualified. A future authorized task
@@ -445,33 +446,44 @@ PC0V, PC0P and EP6A remain pending rather than implied by this result.
 
 ## PC0V external Valgrind confirmation (2026-09-13)
 
-PC0V is complete at JS++ `15df113` and TSCC `1bc3047`, on Linux 7.0.0-29
+PC0V is complete at JS++ `d35999f` and TSCC `1bc3047`, on Linux 7.0.0-29
 x86_64 with c++ 15.2.0 and Valgrind 3.26.0. The first run exposed a real defect
 in standalone local-heap execution: a declared function formed a top-level
 environment <-> closure reference cycle, and `execute_completion` could finish
 below the 64-allocation collection threshold with no final sweep, leaking the
 cycle at exit.
 
-- Fix `15df113`: `execute_completion` now sweeps a call-local heap exactly once
-  on every exit from `run()` - normal completion, throw, malformed bytecode,
-  limit failures and escaped returns - rooting only the returned
-  `Completion.value`. The top-level environment is deliberately not a root, so
-  environment <-> declared-function cycles are reclaimed. Caller-supplied heaps
-  are never swept at exit: the caller owns every root and drives collection, so
-  runtime embedding behaviour is unchanged. Focused regression coverage lives in
-  `tests/standalone_lifetime.cpp` (wired into `test-unit` and `test-sanitize`).
-- Contract: a heap-backed completion value returned from local-heap execution is
-  transferred as an owning `shared_ptr` and remains valid when its reachable
-  graph is acyclic; a self-referential returned graph requires a caller-owned
-  `Heap`. See `docs/handover/ARCHITECTURE.md`.
-- Valgrind passes for lifecycle, heap, VM, the frozen embedded host and the new
-  standalone-lifetime regression: zero errors, zero definitely/indirectly/
-  possibly lost bytes, zero bytes in use at exit, all exits 0. The full
-  optimized suite, independent regression suite (171/171), embedded-preview
-  candidate gate, package/ABI consumers, ASan/UBSan, LSan and 400 deterministic
-  mutations all pass.
-- Discovery evidence (pre-fix failure) and post-fix pass evidence are retained
-  under `docs/evidence/memory-safety/`; the machine-readable summary is
-  `docs/evidence/post-preview-pc0v.json`. PC0P remains pending; PC0V is not a
+- Fix `15df113` added a call-local-heap final sweep, but an ownership review
+  found two holes and superseded it with `d35999f`:
+  1. A caller-supplied `global` combined with a call-local heap was not rooted
+     by the final sweep, so values written into that persistent global could be
+     cleared despite remaining externally reachable. The corrected model rejects
+     `heap == nullptr` with a caller `global` deterministically before executing.
+  2. A self-referential value returned from local-heap execution still leaked,
+     and documenting it as requiring a caller-owned heap is not a passing
+     contract. `js_value` now carries heap affinity: a heap-backed completion
+     pins the call-local heap, so self-referential objects, arrays, closures and
+     mutually reachable graphs stay valid and are reclaimed when the value is
+     released (Heap teardown collection).
+- Corrected ownership model (`d35999f`): every execution runs against one Heap.
+  Caller heap + optional caller global: no exit-time sweep; the caller drives
+  `Heap::collect`. Call-local heap: one final sweep rooted at `Completion.value`
+  on every exit. Runtime embedding behaviour and public handle validity are
+  unchanged. See `docs/handover/ARCHITECTURE.md`.
+- Focused regression coverage in `tests/standalone_lifetime.cpp` (wired into
+  `test-unit` and `test-sanitize`) covers self-referential and mutually
+  reachable returns, every exit class (normal, throw, malformed bytecode,
+  instruction budget, stack limit, escaped return), persistent caller globals,
+  and deterministic rejection of the invalid ownership combination.
+- Valgrind passes for lifecycle, heap, VM, the frozen embedded host and the
+  standalone-lifetime regression at `d35999f`: zero errors, zero definitely/
+  indirectly/possibly lost bytes, zero bytes in use at exit, all exits 0. The
+  full optimized suite, independent regression suite (171/171),
+  embedded-preview candidate gate, package/ABI consumers, ASan/UBSan, LSan and
+  400 deterministic mutations all pass.
+- Discovery evidence (pre-fix failure) and final pass evidence are retained
+  under `docs/evidence/memory-safety/`; intermediate pass evidence at `15df113`
+  is retained with a `-15df113-superseded` suffix. The machine-readable summary
+  is `docs/evidence/post-preview-pc0v.json`. PC0P remains pending; PC0V is not a
   claim of general ECMAScript or memory safety beyond the exact tested
   workloads.

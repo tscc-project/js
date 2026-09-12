@@ -63,9 +63,10 @@ requires a concrete bounded feature.
 ## Preview-qualified next sequence (2026-08-30)
 
 EP0-EP5 has qualified the bounded Linux embedded preview. PC0V external
-Valgrind confirmation is now complete at JS++ `15df113` and TSCC `1bc3047`
-(2026-09-13); it exposed and fixed a standalone local-heap lifetime defect and
-all declared Valgrind workloads pass. Next is PC0P second-platform packaging in
+Valgrind confirmation is now complete at JS++ `d35999f` and TSCC `1bc3047`
+(2026-09-13); it exposed a standalone local-heap lifetime defect that was
+corrected after ownership review, and all declared Valgrind workloads pass.
+Next is PC0P second-platform packaging in
 an authorized remote-workflow task, EP6A around a pinned selected-Test262
 revision, and real embedding-host trials. The following feature checkpoint is
 selected from those results rather than assumed to be promises or modules in

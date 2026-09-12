@@ -4,7 +4,7 @@
   "date": "2026-09-13",
   "candidate": {
     "repository": "js",
-    "commit": "15df1132b801a4f18b2f1119534ca70d6ca90d35",
+    "commit": "d35999f348596dc6c7621fad7c78d0941fd3fcb0",
     "version": "0.0.0-dev",
     "api_version": "0.1"
   },
@@ -21,10 +21,13 @@
     "valgrind": "valgrind-3.26.0",
     "python": "3.14.4"
   },
-  "lifetime_fix": {
-    "commit": "15df1132b801a4f18b2f1119534ca70d6ca90d35",
-    "summary": "execute_completion now sweeps a call-local Heap exactly once on every exit from run(), rooting only Completion.value. The top-level execution environment is not a root, so environment<->declared-function cycles are reclaimed on success and failure paths alike. Caller-supplied heaps are never swept at exit; the caller owns all roots and collection, so runtime embedding behaviour is unchanged.",
+  "ownership_model": {
+    "summary": "Every execution runs against one Heap; a returned completion value is reclaimable only while that Heap (or a value that pins it) stays live. Caller heap + optional caller global: no exit-time sweep; caller drives Heap::collect. Call-local heap (heap==nullptr, global==nullptr): one final sweep rooted at Completion.value on every exit; a heap-backed completion pins the local heap through js_value::heap so self-referential and mutually reachable returned graphs remain valid and are reclaimed when the value is released. Caller global without caller heap: rejected deterministically before execution.",
     "contract": "docs/handover/ARCHITECTURE.md#standalone-execution-lifetime-contract"
+  },
+  "corrective_review": {
+    "supersedes": "15df1132b801a4f18b2f1119534ca70d6ca90d35",
+    "summary": "The candidate repair at 15df113 was reviewed and corrected at d35999f. The corrective model (a) rejects a caller global combined with a call-local heap instead of letting the final sweep lose or mutate externally owned state, and (b) makes self-referential returned values lifetime-safe via heap affinity rather than documenting them as a caller-owned-heap requirement."
   },
   "valgrind_workloads": [
     { "workload": "lifecycle", "command": "./build/lifecycle", "exit": 0, "errors": 0, "leak_summary": "0 bytes in use at exit", "pass": true },
@@ -46,8 +49,8 @@
   },
   "notes": [
     "Discovery evidence for the pre-fix standalone VM leak is retained as docs/evidence/memory-safety/post-preview-pc0v-vm-valgrind-fail.json plus the raw full log; the leak is not rewritten into a pass.",
-    "Post-fix Valgrind pass evidence is recorded per workload under docs/evidence/memory-safety/ with -pass suffixes at commit 15df113.",
-    "Contract boundary: a heap-backed completion value returned from local-heap execution is transferred as an owning shared_ptr and remains valid when its reachable value graph is acyclic; a self-referential returned graph (a closure capturing an environment that references it back) requires a caller-owned Heap. This is documented, not silently weakened.",
-    "PC0V is complete only at the tested JS++ commit 15df113 and TSCC commit 1bc3047; PC0P second-platform packaging remains pending."
+    "Intermediate-pass evidence at 15df113 is retained but marked -15df113-superseded; final Valgrind pass evidence is recorded per workload with -pass suffixes at the corrected commit d35999f.",
+    "Focused tests cover self-referential objects, arrays, closures and mutually reachable graphs, every exit class (normal, throw, malformed bytecode, instruction budget, stack limit, escaped return), persistent caller globals, and deterministic rejection of a caller global without a caller heap.",
+    "PC0V is complete only at the tested JS++ commit d35999f and TSCC commit 1bc3047; PC0P second-platform packaging remains pending."
   ]
 }
