@@ -428,11 +428,13 @@ The next evidence checkpoints are deliberately split:
    jobs/promises, modules or another compatibility slice. Do not choose from
    feature prestige alone.
 
-PC0V is pending because this managed runner has no Valgrind and LeakSanitizer
-cannot operate under ptrace. It is not recorded as passed or failed. Nick will
-push the current commits; Codex must not push, tag or release unless separately
-authorized. Keep the TSCC dependency boundary test-only unless a later concrete,
-bounded compiler feature justifies optional embedding.
+PC0V was pending at the time of that handoff because this managed runner had no
+Valgrind and LeakSanitizer cannot operate under ptrace, so it was deferred to an
+external machine; it was not recorded as passed or failed. It was later completed
+at JS++ `d35999f` and TSCC `1bc3047` (2026-09-13); see the PC0V section below.
+Nick will push the current commits; Codex must not push, tag or release unless
+separately authorized. Keep the TSCC dependency boundary test-only unless a later
+concrete, bounded compiler feature justifies optional embedding.
 
 ## Post-preview retained baseline (2026-09-09)
 
@@ -442,7 +444,8 @@ installed consumers, ASan/UBSan, 400 deterministic mutations and the frozen
 embedded-host soak passed. A fresh sibling `git archive` export independently
 rebuilt and passed the same aggregate, consumer, sanitizer, fuzz and soak gates.
 Exact evidence is retained in `docs/evidence/post-preview-checkpoint-5.json`;
-PC0V, PC0P and EP6A remain pending rather than implied by this result.
+PC0V was pending at that historical checkpoint and was later completed at JS++
+`d35999f` and TSCC `1bc3047`; PC0P and EP6A remain pending.
 
 ## PC0V external Valgrind confirmation (2026-09-13)
 
