@@ -104,30 +104,37 @@ prototype methods and user-defined conversion hooks exist.
 ## Standalone execution lifetime contract
 
 `execute_completion`/`execute` are the lower-level VM boundary used by focused
-bytecode tests and by the embedding runtime. They can run with an owned local
-heap or with a caller-supplied heap, and the ownership contract differs by case:
+bytecode tests and by the embedding runtime. Every execution runs against exactly
+one `Heap`, and a returned completion value is reclaimable only while that heap -
+or a value that pins it - stays live. The combinations are defined as follows:
 
-- With `heap == nullptr` the call creates a call-local `Heap`. On every exit from
-  `run()` - normal completion, throw, malformed-bytecode rejection, instruction/
-  stack/allocation failure, or an escaped top-level return - the local heap is
-  swept exactly once, rooting only the returned `Completion.value`. The top-level
-  execution environment is deliberately not a root: it exists only for the
-  duration of the call, and this sweep reclaims transient environments, declared
-  functions, prototypes, nested bytecode and any reference cycle unreachable
-  from the returned value (including the environment -> declared-function ->
-  closure -> environment cycle). Repeated below-threshold executions therefore do
-  not accumulate retained cycles, and success and failure paths both clean up.
-- A heap-backed completion value returned from local-heap execution is
-  transferred to the caller as an owning `shared_ptr`. It remains valid after the
-  call even though the local heap is destroyed, provided its reachable value
-  graph contains no reference cycle (objects, arrays and closures that do not
-  capture a binding that references them back). A returned graph that is itself
-  self-referential (for example a closure capturing an environment that
-  references it) cannot be reclaimed without a live collector; callers that must
-  return such values must supply a caller-owned `Heap` and drive collection.
-- With a caller-supplied `Heap` no collection is performed at exit: the caller
-  owns every root (including live handles) and decides when to collect, so
-  reachable results remain valid until the caller releases them and invokes
-  collection. The runtime embedding path uses this rule: `js_eval` performs its
-  own post-evaluation collection over intrinsic, global and handle roots, keeping
-  embedding behaviour unchanged.
+- **Caller heap (`heap != nullptr`).** The caller owns every root: any supplied
+  `global` environment and any live handles it holds. `execute_completion`
+  performs no collection at exit; the caller drives `Heap::collect` to break
+  cycles and must root whatever it keeps. `global` may be supplied or null; when
+  null the heap allocates a fresh top-level environment for the call. The runtime
+  embedding path uses this rule and collects after each evaluation, so returned
+  results and persistent globals remain valid until the caller releases their
+  references and invokes collection.
+- **Call-local heap (`heap == nullptr`, `global == nullptr`).** The call owns a
+  local `Heap`. On every exit from `run()` - normal completion, throw, malformed
+  bytecode, instruction/stack/allocation failure, or an escaped top-level return -
+  the local heap is swept once, rooting only the returned `Completion.value`.
+  This reclaims transient environments, declared functions, prototypes, nested
+  bytecode and any reference cycle unreachable from the returned value. A
+  heap-backed completion value then pins the local heap through `js_value::heap`,
+  so even a self-referential returned graph (an object, array or closure that
+  references its own environment or container) remains valid for the caller and
+  is reclaimed when the last reference to the value is released: the heap teardown
+  collection clears the graph's internal edges, breaking the cycle.
+- **Caller global without caller heap (`heap == nullptr`, `global != nullptr`)
+  is rejected deterministically before execution.** A caller-owned persistent
+  global cannot be tracked by a call-local heap: the final sweep would not root
+  it, and once the local heap disappears any persistent cycles written into it
+  would no longer be tracked. The call fails with a clear error instead of losing
+  or mutating live externally owned state.
+
+Repeated below-threshold local executions do not accumulate retained cycles, and
+success and failure paths both clean up. Runtime embedding behaviour and public
+handle validity are unchanged because the embedding always supplies its own heap
+and global and never triggers an exit-time sweep.
