@@ -122,6 +122,13 @@ returns to a top-level safe point so caller-frame temporaries cannot be missed.
 Coordination update: tscc CP4/TC2 now uses one production `ProgramGraph`. It does
 not link or invoke JS++, and the test-only-first boundary is unchanged.
 
+
+## Known-issue status
+
+At this handover point there are **zero known open correctness defects within the currently claimed and certified surface**. This is deliberately narrower than saying there are zero known issues.
+
+Known unsupported or incomplete behavior remains tracked separately and must not be described as a bug-free or fully compliant implementation. Unknown defects may still exist and broader external evidence can expose new correctness bugs; when that happens, reduce and fix them before expanding the affected claim.
+
 ## Development standard
 
 ```text
