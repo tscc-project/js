@@ -13,6 +13,7 @@ ABI_MAJOR := 0
 BUILD := build
 OBJECT := $(BUILD)/Runtime.o
 FRONTEND_OBJECT := $(BUILD)/Frontend.o
+SYNTAX_OBJECT := $(BUILD)/Syntax.o
 BYTECODE_OBJECT := $(BUILD)/Bytecode.o
 VM_OBJECT := $(BUILD)/VM.o
 HEAP_OBJECT := $(BUILD)/Heap.o
@@ -23,15 +24,20 @@ CLI := $(BUILD)/js
 STATIC := $(BUILD)/libjs.a
 SHARED_REAL := $(BUILD)/libjs.so.$(ABI_MAJOR)
 SHARED := $(BUILD)/libjs.so
+SYNTAX_STATIC := $(BUILD)/libjspp-syntax.a
 
-.PHONY: all test test-unit test-regression test-preview-contract test-heap test-sanitize install package-test test-preview-candidate clean
-all: $(CLI) $(STATIC) $(SHARED)
+.PHONY: all test test-unit test-regression test-preview-contract test-heap test-syntax test-sanitize install package-test test-preview-candidate clean
+all: $(CLI) $(STATIC) $(SHARED) $(SYNTAX_STATIC)
 $(BUILD):
 	mkdir -p $(BUILD)
 $(OBJECT): src/Runtime.cpp src/Runtime.h src/Frontend.h src/Bytecode.h src/VM.h include/js.h src/Version.h | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
 $(FRONTEND_OBJECT): src/Frontend.cpp src/Frontend.h | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
+$(SYNTAX_OBJECT): src/Syntax.cpp include/jspp/syntax.h | $(BUILD)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
+$(SYNTAX_STATIC): $(SYNTAX_OBJECT)
+	$(AR) rcs $@ $^
 $(BYTECODE_OBJECT): src/Bytecode.cpp src/Bytecode.h src/Frontend.h | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $< -o $@
 $(VM_OBJECT): src/VM.cpp src/VM.h src/Bytecode.h src/Runtime.h src/Conversion.h src/Error.h src/Property.h | $(BUILD)
@@ -54,6 +60,8 @@ $(BUILD)/lifecycle: tests/lifecycle.cpp $(STATIC)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tests/lifecycle.cpp $(STATIC) -pthread -o $@
 $(BUILD)/frontend: tests/frontend.cpp $(FRONTEND_OBJECT)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tests/frontend.cpp $(FRONTEND_OBJECT) -o $@
+$(BUILD)/syntax: tests/syntax.cpp $(SYNTAX_STATIC)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tests/syntax.cpp $(SYNTAX_STATIC) -o $@
 $(BUILD)/vm: tests/vm.cpp $(STATIC)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tests/vm.cpp $(STATIC) -pthread -o $@
 $(BUILD)/heap: tests/heap.cpp $(STATIC)
@@ -62,10 +70,13 @@ $(BUILD)/standalone-lifetime: tests/standalone_lifetime.cpp $(STATIC)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tests/standalone_lifetime.cpp $(STATIC) -pthread -o $@
 test-heap: $(BUILD)/heap
 	./$(BUILD)/heap
-test-unit: $(CLI) $(BUILD)/lifecycle $(BUILD)/frontend $(BUILD)/vm test-heap $(BUILD)/standalone-lifetime
+test-syntax: $(BUILD)/syntax
+	./$(BUILD)/syntax
+test-unit: $(CLI) $(BUILD)/lifecycle $(BUILD)/frontend $(BUILD)/syntax $(BUILD)/vm test-heap $(BUILD)/standalone-lifetime
 	test "$$($(CLI) --version)" = "JS++ 0.0.0-dev"
 	./$(BUILD)/lifecycle
 	./$(BUILD)/frontend
+	./$(BUILD)/syntax
 	./$(BUILD)/vm
 	./$(BUILD)/standalone-lifetime
 test-regression: all
