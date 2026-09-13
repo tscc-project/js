@@ -25,11 +25,12 @@ int main(int argc, char** argv) {
                   << '\t' << diagnostic.message << '\n';
         return 1;
     }
-    std::size_t opaque = 0, delimited = 0, identifiers = 0, regexes = 0,
+    std::size_t opaque = 0, delimited = 0, expressions = 0, identifiers = 0, regexes = 0,
                 templates = 0;
     for (const auto& node : tree.nodes()) {
         opaque += node.semantics == jspp::syntax::SemanticStatus::Opaque;
         delimited += node.kind == jspp::syntax::NodeKind::Delimited;
+        expressions += node.kind == jspp::syntax::NodeKind::Expression;
     }
     for (const auto& token : tree.tokens()) {
         identifiers += token.kind == jspp::syntax::TokenKind::Identifier;
@@ -39,5 +40,5 @@ int main(int argc, char** argv) {
     std::cout << "ok\t" << tree.source().size() << '\t' << tree.tokens().size()
               << '\t' << tree.nodes().size() << '\t' << opaque << '\t'
               << delimited << '\t' << identifiers << '\t' << regexes << '\t'
-              << templates << '\n';
+              << templates << '\t' << expressions << '\n';
 }

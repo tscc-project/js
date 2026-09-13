@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cctype>
+#include <set>
 #include <utility>
 
 namespace jspp::syntax {
@@ -373,6 +374,98 @@ ParseStatus parse_lossless(std::string source, SyntaxTree& output,
         const Node& node = candidate.nodes_[delimiters.back().node];
         return structural_error(candidate.tokens_[node.first_token],
                                 "unclosed delimiter");
+    }
+
+    // Retain conservative expression islands without weakening the delimiter
+    // barriers around them.  These are deliberately ranges rather than an
+    // executable AST: consumers may reason about their ownership, while an
+    // unsupported token keeps the enclosing construct opaque.
+    const auto significant = [&](std::size_t token) {
+        return candidate.tokens_[token].kind != TokenKind::Comment &&
+               candidate.tokens_[token].kind != TokenKind::Hashbang;
+    };
+    const auto expression_keyword = [](std::string_view word) {
+        static const std::array<std::string_view, 13> words = {
+            "await", "delete", "false", "function", "new", "null", "super",
+            "this", "true", "typeof", "undefined", "void", "yield"
+        };
+        for (const auto candidate : words)
+            if (word == candidate) return true;
+        return false;
+    };
+    const auto expression_punctuator = [](std::string_view punctuation) {
+        static const std::array<std::string_view, 42> allowed = {
+            "(", ")", "[", "]", "{", "}", ".", "?.", ",", ":", "...",
+            "+", "-", "*", "/", "%", "**", "++", "--", "!", "~", "&&",
+            "||", "??", "?", "=", "+=", "-=", "*=", "/=", "%=", "**=",
+            "&&=", "||=", "?" "?=", "==", "!=", "===", "!==", "<", ">",
+            "<="
+        };
+        if (punctuation == ">=" || punctuation == "=>" || punctuation == "&" ||
+            punctuation == "|" || punctuation == "^" || punctuation == "<<" ||
+            punctuation == ">>" || punctuation == ">>>" || punctuation == "&=" ||
+            punctuation == "|=" || punctuation == "^=" || punctuation == "<<=" ||
+            punctuation == ">>=" || punctuation == ">>>=") return true;
+        for (const auto candidate : allowed)
+            if (punctuation == candidate) return true;
+        return false;
+    };
+    const auto expression_range = [&](std::size_t first, std::size_t last,
+                                      std::size_t parent) {
+        while (first < last && !significant(first)) ++first;
+        while (first < last && !significant(last - 1)) --last;
+        if (first == last) return;
+        bool operand = false;
+        for (std::size_t i = first; i < last; ++i) {
+            const Token& token = candidate.tokens_[i];
+            if (!significant(i)) continue;
+            if (token.kind == TokenKind::Identifier || token.kind == TokenKind::Number ||
+                token.kind == TokenKind::String || token.kind == TokenKind::Regex ||
+                token.kind == TokenKind::Template) {
+                operand = true;
+                continue;
+            }
+            const std::string_view word = candidate.spelling(token);
+            if (token.kind == TokenKind::Keyword && expression_keyword(word)) {
+                operand = true;
+                continue;
+            }
+            if (token.kind != TokenKind::Punctuator || !expression_punctuator(word))
+                return;
+        }
+        if (!operand) return;
+        const SourceRange range{candidate.tokens_[first].range.begin,
+                                candidate.tokens_[last - 1].range.end};
+        candidate.nodes_.push_back({NodeKind::Expression, SemanticStatus::Understood,
+                                    range, parent, first, last});
+    };
+
+    // Initializers and return/throw operands are high-value safe islands.
+    std::size_t boundary = 0;
+    for (std::size_t i = 0; i <= candidate.tokens_.size(); ++i) {
+        const bool end = i == candidate.tokens_.size();
+        const std::string_view word = end ? std::string_view{} : candidate.spelling(candidate.tokens_[i]);
+        if (end || word == ";") {
+            std::size_t expression_begin = boundary;
+            for (std::size_t j = boundary; j < i; ++j) {
+                const std::string_view part = candidate.spelling(candidate.tokens_[j]);
+                if (part == "=" || part == "return" || part == "throw" || part == "=>")
+                    expression_begin = j + 1;
+            }
+            expression_range(expression_begin, i, 0);
+            boundary = i + 1;
+        }
+    }
+    // Parenthesized/bracketed contents are useful independently of their
+    // enclosing statement and remain bounded by the already validated pairs.
+    const std::size_t delimiter_count = candidate.nodes_.size();
+    for (std::size_t i = 1; i < delimiter_count; ++i) {
+        const Node& node = candidate.nodes_[i];
+        if (node.kind != NodeKind::Delimited || node.last_token <= node.first_token + 1)
+            continue;
+        const std::string_view opener = candidate.spelling(candidate.tokens_[node.first_token]);
+        if (opener == "(" || opener == "[")
+            expression_range(node.first_token + 1, node.last_token - 1, i);
     }
     output = std::move(candidate);
     diagnostic = {};

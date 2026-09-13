@@ -19,7 +19,7 @@ int main() {
               jspp::syntax::ParseStatus::Success,
           "lossless syntax view rejected source");
     check(tree.source() == "const answer = 42;", "syntax view does not own source");
-    check(tree.nodes().size() == 1 && tree.nodes()[0].range.end == tree.source().size(),
+    check(!tree.nodes().empty() && tree.nodes()[0].range.end == tree.source().size(),
           "syntax root does not own complete source");
     check(tree.nodes()[0].semantics == jspp::syntax::SemanticStatus::Opaque,
           "unparsed root is not protected by an opaque barrier");
@@ -61,15 +61,17 @@ int main() {
     check(jspp::syntax::parse_lossless("f({x:[`a${g(y)}`]});", structure,
                                        diagnostic) == jspp::syntax::ParseStatus::Success,
           "balanced structure rejected");
-    check(structure.nodes().size() == 6,
+    std::size_t structure_delimiters = 0;
+    for (const auto& node : structure.nodes())
+        structure_delimiters += node.kind == jspp::syntax::NodeKind::Delimited;
+    check(structure_delimiters == 5,
           "ordinary and template delimiters were not all retained");
     for (std::size_t i = 1; i < structure.nodes().size(); ++i) {
         const auto& node = structure.nodes()[i];
-        check(node.kind == jspp::syntax::NodeKind::Delimited && node.parent < i &&
-                  node.semantics == jspp::syntax::SemanticStatus::Opaque &&
-                  node.first_token < node.last_token &&
-                  node.range.begin < node.range.end,
-              "delimiter node ownership is invalid");
+        if (node.kind == jspp::syntax::NodeKind::Delimited)
+            check(node.parent < i && node.semantics == jspp::syntax::SemanticStatus::Opaque &&
+                      node.first_token < node.last_token && node.range.begin < node.range.end,
+                  "delimiter node ownership is invalid");
     }
     check(jspp::syntax::parse_lossless("f([)]);", invalid, diagnostic) ==
               jspp::syntax::ParseStatus::SyntaxError,
@@ -85,6 +87,28 @@ int main() {
     reconstructed.append(structure.source().substr(cursor));
     check(reconstructed == structure.source(),
           "opaque source cannot be reproduced byte for byte");
+    jspp::syntax::SyntaxTree expressions;
+    check(jspp::syntax::parse_lossless(
+              "const x=a?.b??f(1);return x?x+1:new C(x);", expressions,
+              diagnostic) == jspp::syntax::ParseStatus::Success,
+          "high-value expression sample rejected");
+    std::size_t expression_nodes = 0;
+    for (const auto& node : expressions.nodes()) {
+        if (node.kind == jspp::syntax::NodeKind::Expression) {
+            ++expression_nodes;
+            check(node.semantics == jspp::syntax::SemanticStatus::Understood &&
+                      node.first_token < node.last_token,
+                  "expression island is not explicitly understood and bounded");
+        }
+    }
+    check(expression_nodes >= 2, "initializer/return expression islands missing");
+    jspp::syntax::SyntaxTree guarded_expression;
+    check(jspp::syntax::parse_lossless("return class X{};", guarded_expression,
+                                       diagnostic) == jspp::syntax::ParseStatus::Success,
+          "opaque expression boundary rejected");
+    for (const auto& node : guarded_expression.nodes())
+        check(node.kind != jspp::syntax::NodeKind::Expression,
+              "unsupported class expression crossed an understood boundary");
     check(jspp::syntax::parse_lossless("'unterminated", invalid, diagnostic) ==
               jspp::syntax::ParseStatus::SyntaxError && diagnostic.line == 1,
           "unterminated string accepted");
