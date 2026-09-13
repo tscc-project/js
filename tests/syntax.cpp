@@ -21,5 +21,27 @@ int main() {
     check(tree.source() == "const answer = 42;", "syntax view does not own source");
     check(tree.nodes().size() == 1 && tree.nodes()[0].range.end == tree.source().size(),
           "syntax root does not own complete source");
+    check(tree.tokens().size() == 5, "lossless token count");
+    check(tree.spelling(tree.tokens()[0]) == "const" &&
+          tree.tokens()[0].kind == jspp::syntax::TokenKind::Keyword,
+          "keyword spelling not retained");
+    check(tree.spelling(tree.tokens()[1]) == "answer" &&
+          tree.tokens()[1].kind == jspp::syntax::TokenKind::Identifier,
+          "identifier spelling not retained");
+    jspp::syntax::SyntaxTree literals;
+    check(jspp::syntax::parse_lossless("// c\n'x' /* y */ `z` 1_000n", literals,
+                                       diagnostic) == jspp::syntax::ParseStatus::Success,
+          "lossless literal tokens rejected");
+    check(literals.tokens().size() == 5 &&
+          literals.tokens()[0].kind == jspp::syntax::TokenKind::Comment &&
+          literals.tokens()[1].kind == jspp::syntax::TokenKind::String &&
+          literals.tokens()[2].kind == jspp::syntax::TokenKind::Comment &&
+          literals.tokens()[3].kind == jspp::syntax::TokenKind::Template &&
+          literals.tokens()[4].kind == jspp::syntax::TokenKind::Number,
+          "lossless token families incomplete");
+    jspp::syntax::SyntaxTree invalid;
+    check(jspp::syntax::parse_lossless("'unterminated", invalid, diagnostic) ==
+              jspp::syntax::ParseStatus::SyntaxError && diagnostic.line == 1,
+          "unterminated string accepted");
     std::cout << "JS++ lossless syntax API passed\n";
 }
