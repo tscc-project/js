@@ -43,16 +43,16 @@ later ordering changes when runtime and conformance evidence justifies it.
     rooted intrinsics, Object/Function/Error/Array/String foundations,
     descriptors/accessors, centralized errors, located stacks, host values,
     callbacks, globals, containment and recovery through public ABI 0.1.
-16. **JS11 - jobs/promises:** host-drained jobs, promises/reactions, then async
-    functions; host facilities remain external.
-17. **JS12 - modules:** parsing, records, linking, cycles, live bindings, host
+16. **JS11A - bounded class runtime semantics:** selected by JRS8. Start with class declarations/expressions, construction/prototype linkage, instance/static methods and inheritance/super. Keep fields/private names/static blocks as follow-up slices rather than widening the first checkpoint.
+17. **JS11B - jobs/promises:** host-drained jobs, promises/reactions, then async functions; host facilities remain external.
+18. **JS12 - modules:** parsing, records, linking, cycles, live bindings, host
     resolver hooks, then dynamic import.
-18. **JS13 - broader ECMAScript:** classes, destructuring, spread/rest,
+19. **JS13 - broader ECMAScript:** classes, destructuring, spread/rest,
     generators/iterators, symbols, collections, regex, typed arrays, dates, and
     remaining modern families as vertical slices.
-19. **JS14 - conformance/hardening:** selected Test262, explicit classifications,
+20. **JS14 - conformance/hardening:** selected Test262, explicit classifications,
     fuzzing, memory/performance, and supported-platform evidence.
-20. **JS15 - packaging/releases:** supported-platform CLI and libraries, ABI
+21. **JS15 - packaging/releases:** supported-platform CLI and libraries, ABI
     policy, installers, release automation, examples, and truthful docs.
 
 Integration begins after the primitive engine is useful: dual-runtime tscc tests,
@@ -66,11 +66,7 @@ EP0-EP5 has qualified the bounded Linux embedded preview. PC0V external
 Valgrind confirmation is now complete at JS++ `d35999f` and TSCC `1bc3047`
 (2026-09-13); it exposed a standalone local-heap lifetime defect that was
 corrected after ownership review, and all declared Valgrind workloads pass.
-Next is PC0P second-platform packaging in
-an authorized remote-workflow task, EP6A around a pinned selected-Test262
-revision, and real embedding-host trials. The following feature checkpoint is
-selected from those results rather than assumed to be promises or modules in
-advance.
+JRS8 now pins selected Test262 at `419d3e0a2273ba01a3bfcbec423f2801425b8e93` and selects **JS11A bounded class runtime semantics** as the next engine slice. The Test262 checkout was not present in the review workspace, so no numerical Test262 result is claimed yet; its selected runner must be rerun against the pinned checkout when available. PC0P second-platform packaging and real embedding-host trials remain separate evidence work.
 
 Compiler coordination status: tscc CP3/TC1 now retains a durable per-file
 compilation unit through emission. This changes no JS++ ownership or dependency:
@@ -99,3 +95,8 @@ JS10B validates that rule with Object/Function/Error prototypes, call/apply,
 error identity/reporting and user conversion hooks. The 114/114 result supports
 moving toward Array/String built-ins, but descriptors and complete stack frames
 remain prerequisites for broad compatibility claims.
+
+
+## JRS8 engine decision (2026-09-14)
+
+The regression suite now owns a pinned selected-Test262 diagnostic contract over supported-core calibration plus classes, jobs/promises, iterators/generators and modules. Because the corpus payload was unavailable locally, the checkpoint does not claim a Test262 pass percentage. The next implementation is nevertheless no longer ambiguous: **JS11A is bounded class runtime semantics**. The syntax frontend already supplies stable class boundaries, and classes are synchronous semantics that do not require the job-queue host contract of promises or resolver/linker host contract of modules. Keep the 171/171 runtime/embedding wall green and rerun the pinned class Test262 bucket before broadening beyond the bounded class surface.

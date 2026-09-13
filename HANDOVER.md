@@ -419,16 +419,12 @@ The next evidence checkpoints are deliberately split:
    should add at least Ubuntu and macOS public-header build/test/package
    consumers, with Windows treated as a separate ABI-porting decision rather
    than silently implied.
-3. **EP6A - selected Test262 harness:** pin an upstream revision and licence;
-   implement supported, unsupported, harness-inapplicable, fail, crash and
-   timeout classifications; begin with the already documented embedded subset.
+3. **EP6A/JRS8 - selected Test262 harness:** complete at the contract/decision layer. Test262 is pinned to `419d3e0a2273ba01a3bfcbec423f2801425b8e93` with explicit supported, unsupported, harness-inapplicable, fail, crash and timeout classifications. The source checkout was unavailable locally, so numerical Test262 execution remains pending.
 4. **Embedding trials:** exercise real small C/C++ hosts against installed
    packages and classify API, ownership, diagnostics and capability gaps.
-5. **Decision gate:** use the conformance and host evidence to choose between
-   jobs/promises, modules or another compatibility slice. Do not choose from
-   feature prestige alone.
+5. **Decision gate:** completed by JRS8 for the next runtime slice: **JS11A bounded class runtime semantics**. Jobs/promises become JS11B and modules remain JS12. Re-open the ordering after the pinned Test262 buckets and embedding trials provide additional measured evidence.
 
-PC0V was pending at the time of that handoff because this managed runner had no
+PC0V was pending at the time of the historical handoff because this managed runner had no
 Valgrind and LeakSanitizer cannot operate under ptrace, so it was deferred to an
 external machine; it was not recorded as passed or failed. It was later completed
 at JS++ `d35999f` and TSCC `1bc3047` (2026-09-13); see the PC0V section below.
@@ -490,3 +486,10 @@ cycle at exit.
   is `docs/evidence/post-preview-pc0v.json`. PC0P remains pending; PC0V is not a
   claim of general ECMAScript or memory safety beyond the exact tested
   workloads.
+
+
+## JRS8 selected Test262 / next runtime slice (2026-09-14)
+
+`js-regression-suite@9ca3d88` pins Test262 revision `419d3e0a2273ba01a3bfcbec423f2801425b8e93` and owns a deterministic selected runner. It keeps Test262 classifications separate from the frozen 171/171 runtime/embedding contract. The checkout itself was unavailable in this workspace, so there is deliberately no numerical Test262 claim yet.
+
+The next implementation checkpoint is **JS11A: bounded class runtime semantics**. Begin with class declarations/expressions as runtime values, constructor/prototype linkage, instance/static methods, then `extends`/`super`. Treat fields, private names, computed names and static blocks as follow-up slices. Do not mix the Promise job queue or module resolver/linker contracts into JS11A. JS11B is reserved for jobs/promises and JS12 remains modules.
