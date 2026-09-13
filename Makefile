@@ -26,7 +26,7 @@ SHARED_REAL := $(BUILD)/libjs.so.$(ABI_MAJOR)
 SHARED := $(BUILD)/libjs.so
 SYNTAX_STATIC := $(BUILD)/libjspp-syntax.a
 
-.PHONY: all test test-unit test-regression test-preview-contract test-heap test-syntax test-sanitize install package-test test-preview-candidate clean
+.PHONY: all test test-unit test-regression test-preview-contract test-heap test-syntax syntax-inventory test-sanitize install package-test test-preview-candidate clean
 all: $(CLI) $(STATIC) $(SHARED) $(SYNTAX_STATIC)
 $(BUILD):
 	mkdir -p $(BUILD)
@@ -62,6 +62,8 @@ $(BUILD)/frontend: tests/frontend.cpp $(FRONTEND_OBJECT)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tests/frontend.cpp $(FRONTEND_OBJECT) -o $@
 $(BUILD)/syntax: tests/syntax.cpp $(SYNTAX_STATIC)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tests/syntax.cpp $(SYNTAX_STATIC) -o $@
+$(BUILD)/syntax-inventory: tools/syntax_inventory.cpp $(SYNTAX_STATIC)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tools/syntax_inventory.cpp $(SYNTAX_STATIC) -o $@
 $(BUILD)/vm: tests/vm.cpp $(STATIC)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tests/vm.cpp $(STATIC) -pthread -o $@
 $(BUILD)/heap: tests/heap.cpp $(STATIC)
@@ -72,6 +74,9 @@ test-heap: $(BUILD)/heap
 	./$(BUILD)/heap
 test-syntax: $(BUILD)/syntax
 	./$(BUILD)/syntax
+syntax-inventory: $(BUILD)/syntax-inventory
+	@test -n "$(BENCHMARK_ROOT)" || (echo "BENCHMARK_ROOT is required" >&2; exit 2)
+	python3 tools/run_syntax_inventory.py --benchmark-root "$(BENCHMARK_ROOT)" --scanner "$(abspath $(BUILD)/syntax-inventory)"
 test-unit: $(CLI) $(BUILD)/lifecycle $(BUILD)/frontend $(BUILD)/syntax $(BUILD)/vm test-heap $(BUILD)/standalone-lifetime
 	test "$$($(CLI) --version)" = "JS++ 0.0.0-dev"
 	./$(BUILD)/lifecycle

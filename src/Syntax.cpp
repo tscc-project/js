@@ -335,6 +335,21 @@ ParseStatus parse_lossless(std::string source, SyntaxTree& output,
          ++token_index) {
         const Token& token = candidate.tokens_[token_index];
         const std::string_view spelling = candidate.spelling(token);
+        char actual_close = 0;
+        if (token.kind == TokenKind::Punctuator && spelling.size() == 1 &&
+            (spelling[0] == ')' || spelling[0] == ']' || spelling[0] == '}'))
+            actual_close = spelling[0];
+        else if (token.kind == TokenKind::Template && !spelling.empty() &&
+                 spelling.front() == '}')
+            actual_close = '}';
+        if (actual_close) {
+            if (delimiters.empty() || delimiters.back().close != actual_close)
+                return structural_error(token, "unmatched closing delimiter");
+            Node& node = candidate.nodes_[delimiters.back().node];
+            node.range.end = token.range.end;
+            node.last_token = token_index + 1;
+            delimiters.pop_back();
+        }
         char close = 0;
         if (token.kind == TokenKind::Punctuator) {
             if (spelling == "(") close = ')';
@@ -352,22 +367,7 @@ ParseStatus parse_lossless(std::string source, SyntaxTree& output,
                                         {token.range.begin, token.range.end}, parent,
                                         token_index, token_index + 1});
             delimiters.push_back({close, node});
-            continue;
         }
-        char actual_close = 0;
-        if (token.kind == TokenKind::Punctuator && spelling.size() == 1 &&
-            (spelling[0] == ')' || spelling[0] == ']' || spelling[0] == '}'))
-            actual_close = spelling[0];
-        else if (token.kind == TokenKind::Template && !spelling.empty() &&
-                 spelling.front() == '}')
-            actual_close = '}';
-        if (!actual_close) continue;
-        if (delimiters.empty() || delimiters.back().close != actual_close)
-            return structural_error(token, "unmatched closing delimiter");
-        Node& node = candidate.nodes_[delimiters.back().node];
-        node.range.end = token.range.end;
-        node.last_token = token_index + 1;
-        delimiters.pop_back();
     }
     if (!delimiters.empty()) {
         const Node& node = candidate.nodes_[delimiters.back().node];
