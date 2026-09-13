@@ -39,6 +39,22 @@ int main() {
           literals.tokens()[3].kind == jspp::syntax::TokenKind::Template &&
           literals.tokens()[4].kind == jspp::syntax::TokenKind::Number,
           "lossless token families incomplete");
+    jspp::syntax::SyntaxTree lexical_goals;
+    check(jspp::syntax::parse_lossless(
+              "#!/usr/bin/env node\nconst \\u0061=0xCA_FE;let β=.5e+2;"
+              "const r=/[/\\\\]/giu;const q=a/b/2;const t=`a${x+`${y}`}z`;a?.b?" "?=1;",
+              lexical_goals, diagnostic) == jspp::syntax::ParseStatus::Success,
+          "lexical-goal sample rejected");
+    std::size_t regexes = 0, templates = 0, hashbangs = 0, slashes = 0;
+    for (const auto& token : lexical_goals.tokens()) {
+        regexes += token.kind == jspp::syntax::TokenKind::Regex;
+        templates += token.kind == jspp::syntax::TokenKind::Template;
+        hashbangs += token.kind == jspp::syntax::TokenKind::Hashbang;
+        slashes += token.kind == jspp::syntax::TokenKind::Punctuator &&
+                   lexical_goals.spelling(token) == "/";
+    }
+    check(regexes == 1 && templates == 4 && hashbangs == 1 && slashes == 2,
+          "regex/division, nested-template, or hashbang lexical goal incorrect");
     jspp::syntax::SyntaxTree invalid;
     check(jspp::syntax::parse_lossless("'unterminated", invalid, diagnostic) ==
               jspp::syntax::ParseStatus::SyntaxError && diagnostic.line == 1,

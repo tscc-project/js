@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cctype>
+#include <utility>
 
 namespace jspp::syntax {
 
@@ -12,144 +13,303 @@ std::string_view SyntaxTree::spelling(const Token& token) const noexcept {
                                             token.range.end - token.range.begin);
 }
 
+class Scanner {
+public:
+    Scanner(SyntaxTree& tree, Diagnostic& diagnostic)
+        : tree_(tree), diagnostic_(diagnostic) {}
+
+    ParseStatus scan() {
+        if (starts_with("#!")) scan_line_comment(TokenKind::Hashbang);
+        return scan_code(false) ? ParseStatus::Success : ParseStatus::SyntaxError;
+    }
+
+private:
+    bool scan_code(bool template_expression) {
+        std::size_t braces = 0;
+        while (at_ < source().size()) {
+            const unsigned char byte = peek();
+            if (std::isspace(byte)) { advance(); continue; }
+            if (template_expression && byte == '}' && braces == 0) return true;
+
+            const std::size_t begin = at_;
+            const std::size_t begin_line = line_;
+            const std::size_t begin_column = column_;
+            if (identifier_start()) {
+                if (!scan_identifier())
+                    return fail(begin, at_, begin_line, begin_column,
+                                "invalid Unicode escape in identifier");
+                const std::string_view word = slice(begin, at_);
+                add(is_keyword(word) ? TokenKind::Keyword : TokenKind::Identifier,
+                    begin, at_);
+                continue;
+            }
+            if (std::isdigit(byte) ||
+                (byte == '.' && std::isdigit(peek(1)))) {
+                scan_number();
+                add(TokenKind::Number, begin, at_);
+                continue;
+            }
+            if (byte == '\'' || byte == '"') {
+                if (!scan_string(static_cast<char>(byte)))
+                    return fail(begin, at_, begin_line, begin_column,
+                                "unterminated string literal");
+                add(TokenKind::String, begin, at_);
+                continue;
+            }
+            if (byte == '`') {
+                if (!scan_template())
+                    return fail(begin, at_, begin_line, begin_column,
+                                "unterminated template literal");
+                continue;
+            }
+            if (starts_with("//")) { scan_line_comment(TokenKind::Comment); continue; }
+            if (starts_with("/*")) {
+                if (!scan_block_comment())
+                    return fail(begin, at_, begin_line, begin_column,
+                                "unterminated block comment");
+                continue;
+            }
+            if (byte == '/' && regex_allowed()) {
+                if (!scan_regex())
+                    return fail(begin, at_, begin_line, begin_column,
+                                "unterminated regular expression literal");
+                add(TokenKind::Regex, begin, at_);
+                continue;
+            }
+            const std::size_t length = punctuator_length();
+            for (std::size_t i = 0; i < length; ++i) advance();
+            add(TokenKind::Punctuator, begin, at_);
+            if (template_expression) {
+                if (slice(begin, at_) == "{") ++braces;
+                else if (slice(begin, at_) == "}" && braces) --braces;
+            }
+        }
+        return !template_expression;
+    }
+
+    bool scan_identifier() {
+        do {
+            if (peek() == '\\') {
+                if (!scan_unicode_escape()) return false;
+            } else {
+                advance();
+            }
+        } while (at_ < source().size() && identifier_part());
+        return true;
+    }
+
+    bool scan_unicode_escape() {
+        advance();
+        if (peek() != 'u') return false;
+        advance();
+        if (peek() == '{') {
+            advance();
+            std::size_t digits = 0;
+            while (std::isxdigit(peek())) { advance(); ++digits; }
+            if (!digits || peek() != '}') return false;
+            advance();
+            return true;
+        }
+        for (int i = 0; i < 4; ++i) {
+            if (!std::isxdigit(peek())) return false;
+            advance();
+        }
+        return true;
+    }
+
+    void scan_number() {
+        if (peek() == '0' && (peek(1) == 'x' || peek(1) == 'X' ||
+                             peek(1) == 'b' || peek(1) == 'B' ||
+                             peek(1) == 'o' || peek(1) == 'O')) {
+            advance(); advance();
+            while (std::isalnum(peek()) || peek() == '_') advance();
+            return;
+        }
+        if (peek() == '.') advance();
+        while (std::isdigit(peek()) || peek() == '_') advance();
+        if (peek() == '.') {
+            advance();
+            while (std::isdigit(peek()) || peek() == '_') advance();
+        }
+        if (peek() == 'e' || peek() == 'E') {
+            advance();
+            if (peek() == '+' || peek() == '-') advance();
+            while (std::isdigit(peek()) || peek() == '_') advance();
+        }
+        if (peek() == 'n') advance();
+    }
+
+    bool scan_string(char quote) {
+        advance();
+        bool escaped = false;
+        while (at_ < source().size()) {
+            const char byte = static_cast<char>(peek());
+            if (!escaped && byte == quote) { advance(); return true; }
+            if (!escaped && (byte == '\n' || byte == '\r')) return false;
+            if (!escaped && byte == '\\') escaped = true;
+            else escaped = false;
+            advance();
+        }
+        return false;
+    }
+
+    bool scan_template() {
+        std::size_t chunk = at_;
+        advance();
+        bool escaped = false;
+        while (at_ < source().size()) {
+            if (!escaped && peek() == '`') {
+                advance(); add(TokenKind::Template, chunk, at_); return true;
+            }
+            if (!escaped && peek() == '$' && peek(1) == '{') {
+                advance(); advance();
+                add(TokenKind::Template, chunk, at_);
+                if (!scan_code(true) || peek() != '}') return false;
+                chunk = at_;
+                advance();
+                escaped = false;
+                continue;
+            }
+            if (!escaped && peek() == '\\') escaped = true;
+            else escaped = false;
+            advance();
+        }
+        return false;
+    }
+
+    bool scan_regex() {
+        advance();
+        bool escaped = false, character_class = false;
+        while (at_ < source().size()) {
+            const char byte = static_cast<char>(peek());
+            if (!escaped && (byte == '\n' || byte == '\r')) return false;
+            if (!escaped && byte == '[') character_class = true;
+            else if (!escaped && byte == ']') character_class = false;
+            else if (!escaped && byte == '/' && !character_class) {
+                advance();
+                while (identifier_part()) advance();
+                return true;
+            }
+            if (!escaped && byte == '\\') escaped = true;
+            else escaped = false;
+            advance();
+        }
+        return false;
+    }
+
+    void scan_line_comment(TokenKind kind) {
+        const std::size_t begin = at_;
+        advance(); advance();
+        while (at_ < source().size() && peek() != '\n' && peek() != '\r') advance();
+        add(kind, begin, at_);
+    }
+
+    bool scan_block_comment() {
+        const std::size_t begin = at_;
+        advance(); advance();
+        while (at_ < source().size()) {
+            if (starts_with("*/")) {
+                advance(); advance(); add(TokenKind::Comment, begin, at_); return true;
+            }
+            advance();
+        }
+        return false;
+    }
+
+    bool regex_allowed() const {
+        for (auto it = tree_.tokens_.rbegin(); it != tree_.tokens_.rend(); ++it) {
+            if (it->kind == TokenKind::Comment || it->kind == TokenKind::Hashbang) continue;
+            const std::string_view previous = tree_.spelling(*it);
+            if (it->kind == TokenKind::Identifier || it->kind == TokenKind::Number ||
+                it->kind == TokenKind::String || it->kind == TokenKind::Regex)
+                return false;
+            if (it->kind == TokenKind::Template &&
+                !previous.empty() && previous.back() == '`') return false;
+            if (previous == ")" || previous == "]" || previous == "}" ||
+                previous == "++" || previous == "--") return false;
+            if (it->kind == TokenKind::Keyword)
+                return previous != "this" && previous != "super" && previous != "true" &&
+                       previous != "false" && previous != "null";
+            return true;
+        }
+        return true;
+    }
+
+    std::size_t punctuator_length() const {
+        static const std::array<std::string_view, 57> punctuators = {
+            ">>>=", "**=", "&&=", "||=", "?" "?=", "===", "!==", ">>>", "<<=", ">>=",
+            "...", "=>", "==", "!=", "<=", ">=", "++", "--", "&&", "||", "??",
+            "?.", "**", "<<", ">>", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=",
+            "{", "}", "(", ")", "[", "]", ".", ";", ",", "<", ">", "+", "-", "*",
+            "%", "&", "|", "^", "!", "~", "?", ":", "=", "/"
+        };
+        for (const std::string_view punctuator : punctuators)
+            if (starts_with(punctuator)) return punctuator.size();
+        return 1;
+    }
+
+    bool identifier_start() const {
+        const unsigned char byte = peek();
+        return std::isalpha(byte) || byte == '_' || byte == '$' || byte >= 0x80 ||
+               (byte == '\\' && peek(1) == 'u');
+    }
+
+    bool identifier_part() const {
+        return identifier_start() || std::isdigit(peek());
+    }
+
+    bool is_keyword(std::string_view word) const {
+        static const std::array<std::string_view, 49> keywords = {
+            "as", "async", "await", "break", "case", "catch", "class", "const",
+            "continue", "debugger", "default", "delete", "do", "else", "export",
+            "extends", "false", "finally", "for", "from", "function", "get", "if",
+            "implements", "import", "in", "instanceof", "interface", "let", "new", "null",
+            "of", "package", "private", "protected", "public", "return", "set", "static",
+            "super", "switch", "this", "throw", "true", "try", "typeof", "var", "void"
+        };
+        for (const std::string_view keyword : keywords)
+            if (word == keyword) return true;
+        return word == "while" || word == "with" || word == "yield";
+    }
+
+    unsigned char peek(std::size_t offset = 0) const {
+        return at_ + offset < source().size()
+            ? static_cast<unsigned char>(source()[at_ + offset]) : 0;
+    }
+    bool starts_with(std::string_view text) const {
+        return source().compare(at_, text.size(), text) == 0;
+    }
+    std::string_view slice(std::size_t begin, std::size_t end) const {
+        return std::string_view(source()).substr(begin, end - begin);
+    }
+    const std::string& source() const { return tree_.source_; }
+    void advance() {
+        const char byte = source()[at_++];
+        if (byte == '\n') { ++line_; column_ = 1; }
+        else ++column_;
+    }
+    void add(TokenKind kind, std::size_t begin, std::size_t end) {
+        tree_.tokens_.push_back({kind, {begin, end}});
+    }
+    bool fail(std::size_t begin, std::size_t end, std::size_t line,
+              std::size_t column, const char* message) {
+        diagnostic_ = {{begin, end}, line, column, message};
+        return false;
+    }
+
+    SyntaxTree& tree_;
+    Diagnostic& diagnostic_;
+    std::size_t at_ = 0;
+    std::size_t line_ = 1;
+    std::size_t column_ = 1;
+};
+
 ParseStatus parse_lossless(std::string source, SyntaxTree& output,
                            Diagnostic& diagnostic) {
     SyntaxTree candidate;
     candidate.source_ = std::move(source);
-    const auto fail = [&](std::size_t begin, std::size_t end,
-                          std::size_t line, std::size_t column,
-                          const char* message) {
-        diagnostic = {{begin, end}, line, column, message};
-        return ParseStatus::SyntaxError;
-    };
-    const auto identifier_start = [](unsigned char byte) {
-        return std::isalpha(byte) || byte == '_' || byte == '$' || byte >= 0x80;
-    };
-    const auto identifier_continue = [&](unsigned char byte) {
-        return identifier_start(byte) || std::isdigit(byte);
-    };
-    static const std::array<std::string_view, 43> keywords = {
-        "as", "async", "await", "break", "case", "catch", "class", "const",
-        "continue", "debugger", "default", "delete", "do", "else", "export",
-        "extends", "false", "finally", "for", "from", "function", "get", "if",
-        "import", "in", "instanceof", "let", "new", "null", "of", "return",
-        "set", "static", "super", "switch", "this", "throw", "true", "try",
-        "typeof", "var", "void", "while"
-    };
-    const auto is_keyword = [&](std::string_view spelling) {
-        for (const std::string_view keyword : keywords)
-            if (spelling == keyword) return true;
-        return spelling == "with" || spelling == "yield";
-    };
-    const auto add = [&](TokenKind kind, std::size_t begin, std::size_t end) {
-        candidate.tokens_.push_back({kind, {begin, end}});
-    };
-    std::size_t at = 0, line = 1, column = 1;
-    const auto advance = [&](char byte) {
-        ++at;
-        if (byte == '\n') { ++line; column = 1; }
-        else ++column;
-    };
-    while (at < candidate.source_.size()) {
-        const unsigned char byte = static_cast<unsigned char>(candidate.source_[at]);
-        if (std::isspace(byte)) { advance(candidate.source_[at]); continue; }
-        const std::size_t begin = at, begin_line = line, begin_column = column;
-        if (identifier_start(byte)) {
-            advance(candidate.source_[at]);
-            while (at < candidate.source_.size() &&
-                   identifier_continue(static_cast<unsigned char>(candidate.source_[at])))
-                advance(candidate.source_[at]);
-            const std::string_view spelling(candidate.source_.data() + begin, at - begin);
-            add(is_keyword(spelling) ? TokenKind::Keyword : TokenKind::Identifier,
-                begin, at);
-            continue;
-        }
-        if (std::isdigit(byte) || (byte == '.' && at + 1 < candidate.source_.size() &&
-                                  std::isdigit(static_cast<unsigned char>(candidate.source_[at + 1])))) {
-            advance(candidate.source_[at]);
-            while (at < candidate.source_.size()) {
-                const unsigned char next = static_cast<unsigned char>(candidate.source_[at]);
-                if (!(std::isalnum(next) || next == '.' || next == '_')) break;
-                advance(candidate.source_[at]);
-            }
-            add(TokenKind::Number, begin, at);
-            continue;
-        }
-        if (byte == '\'' || byte == '"') {
-            const char quote = candidate.source_[at];
-            advance(candidate.source_[at]);
-            bool escaped = false, closed = false;
-            while (at < candidate.source_.size()) {
-                const char next = candidate.source_[at];
-                if (!escaped && next == quote) {
-                    advance(next); closed = true; break;
-                }
-                if (!escaped && (next == '\n' || next == '\r')) break;
-                if (!escaped && next == '\\') escaped = true;
-                else escaped = false;
-                advance(next);
-            }
-            if (!closed) return fail(begin, at, begin_line, begin_column,
-                                     "unterminated string literal");
-            add(TokenKind::String, begin, at);
-            continue;
-        }
-        if (byte == '`') {
-            advance(candidate.source_[at]);
-            bool escaped = false, closed = false;
-            while (at < candidate.source_.size()) {
-                const char next = candidate.source_[at];
-                if (!escaped && next == '`') {
-                    advance(next); closed = true; break;
-                }
-                if (!escaped && next == '\\') escaped = true;
-                else escaped = false;
-                advance(next);
-            }
-            if (!closed) return fail(begin, at, begin_line, begin_column,
-                                     "unterminated template literal");
-            add(TokenKind::Template, begin, at);
-            continue;
-        }
-        if (byte == '/' && at + 1 < candidate.source_.size() &&
-            candidate.source_[at + 1] == '/') {
-            advance('/'); advance('/');
-            while (at < candidate.source_.size() && candidate.source_[at] != '\n')
-                advance(candidate.source_[at]);
-            add(TokenKind::Comment, begin, at);
-            continue;
-        }
-        if (byte == '/' && at + 1 < candidate.source_.size() &&
-            candidate.source_[at + 1] == '*') {
-            advance('/'); advance('*');
-            bool closed = false;
-            while (at < candidate.source_.size()) {
-                if (at + 1 < candidate.source_.size() && candidate.source_[at] == '*' &&
-                    candidate.source_[at + 1] == '/') {
-                    advance('*'); advance('/'); closed = true; break;
-                }
-                advance(candidate.source_[at]);
-            }
-            if (!closed) return fail(begin, at, begin_line, begin_column,
-                                     "unterminated block comment");
-            add(TokenKind::Comment, begin, at);
-            continue;
-        }
-        static const std::array<std::string_view, 29> punctuators = {
-            ">>>=", "===", "!==", ">>>", "**=", "&&=", "||=", "?" "?=", "=>",
-            "==", "!=", "<=", ">=", "++", "--", "&&", "||", "??", "?.",
-            "**", "<<", ">>", "+=", "-=", "*=", "/=", "%=", "...", "&="
-        };
-        std::size_t length = 0;
-        for (const std::string_view punctuator : punctuators)
-            if (punctuator.size() > length &&
-                candidate.source_.compare(at, punctuator.size(), punctuator) == 0)
-                length = punctuator.size();
-        if (!length) length = 1;
-        for (std::size_t count = 0; count < length; ++count)
-            advance(candidate.source_[at]);
-        add(TokenKind::Punctuator, begin, at);
-    }
+    Scanner scanner(candidate, diagnostic);
+    if (scanner.scan() == ParseStatus::SyntaxError) return ParseStatus::SyntaxError;
     candidate.nodes_.push_back({NodeKind::Root, {0, candidate.source_.size()},
                                 0, 0, candidate.tokens_.size()});
     output = std::move(candidate);

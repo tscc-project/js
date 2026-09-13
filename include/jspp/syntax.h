@@ -9,7 +9,8 @@ namespace jspp::syntax {
 
 enum class ParseStatus { Success, SyntaxError };
 enum class TokenKind {
-    Identifier, Keyword, Number, String, Regex, Template, Punctuator, Comment
+    Identifier, Keyword, Number, String, Regex, Template, Punctuator, Comment,
+    Hashbang
 };
 enum class NodeKind { Root, Delimited, Opaque };
 
@@ -38,6 +39,7 @@ public:
     const std::vector<Node>& nodes() const noexcept { return nodes_; }
 
 private:
+    friend class Scanner;
     friend ParseStatus parse_lossless(std::string, SyntaxTree&, Diagnostic&);
     std::string source_;
     std::vector<Token> tokens_;
