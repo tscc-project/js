@@ -25,6 +25,13 @@ int main(int argc, char** argv) {
                   << '\t' << diagnostic.message << '\n';
         return 1;
     }
+    jspp::syntax::Certification certification;
+    if (jspp::syntax::certify_lossless(tree, certification, diagnostic) ==
+        jspp::syntax::ParseStatus::SyntaxError) {
+        std::cout << "error\t" << diagnostic.line << '\t' << diagnostic.column
+                  << '\t' << diagnostic.message << '\n';
+        return 1;
+    }
     std::size_t opaque = 0, delimited = 0, expressions = 0, statements = 0,
                 functions = 0, parameters = 0, classes = 0, imports = 0,
                 exports = 0,
@@ -51,5 +58,8 @@ int main(int argc, char** argv) {
               << delimited << '\t' << identifiers << '\t' << regexes << '\t'
               << templates << '\t' << expressions << '\t' << statements << '\t'
               << functions << '\t' << parameters << '\t' << classes << '\t'
-              << imports << '\t' << exports << '\n';
+              << imports << '\t' << exports << '\t' << certification.token_bytes
+              << '\t' << certification.trivia_bytes << '\t'
+              << certification.understood_expression_bytes << '\t'
+              << (certification.exact && certification.deterministic) << '\n';
 }

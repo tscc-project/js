@@ -31,11 +31,13 @@ def main() -> int:
         )
         fields = run.stdout.rstrip("\n").split("\t")
         record = {"artifact": definition.parent.name, "path": str(source)}
-        if run.returncode == 0 and len(fields) == 16 and fields[0] == "ok":
+        if run.returncode == 0 and len(fields) == 20 and fields[0] == "ok":
             keys = ("bytes", "tokens", "nodes", "opaque_nodes", "delimited_nodes",
                     "identifiers", "regexes", "template_chunks", "expressions",
                     "statements", "functions", "parameters", "classes", "imports",
-                    "exports")
+                    "exports", "token_bytes", "trivia_bytes",
+                    "understood_expression_bytes",
+                    "certified")
             record.update({key: int(value) for key, value in zip(keys, fields[1:])})
             record["accepted"] = True
         else:
@@ -56,13 +58,20 @@ def main() -> int:
         "classes": sum(item.get("classes", 0) for item in results),
         "imports": sum(item.get("imports", 0) for item in results),
         "exports": sum(item.get("exports", 0) for item in results),
+        "token_bytes": sum(item.get("token_bytes", 0) for item in results),
+        "trivia_bytes": sum(item.get("trivia_bytes", 0) for item in results),
+        "understood_expression_bytes": sum(
+            item.get("understood_expression_bytes", 0) for item in results
+        ),
+        "certified": sum(item.get("certified", 0) for item in results),
     }
     report = {"summary": summary, "fixtures": results}
     rendered = json.dumps(report, indent=2) + "\n"
     if args.output:
         args.output.write_text(rendered, encoding="utf-8")
     sys.stdout.write(rendered)
-    return 0 if summary["artifacts"] == 12 and summary["accepted"] == 12 else 1
+    return 0 if (summary["artifacts"] == 12 and summary["accepted"] == 12 and
+                 summary["certified"] == 12) else 1
 
 
 if __name__ == "__main__":

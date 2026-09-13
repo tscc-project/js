@@ -159,6 +159,15 @@ int main() {
     for (const auto& node : dynamic_import.nodes())
         check(node.kind != jspp::syntax::NodeKind::ImportDeclaration,
               "dynamic import was classified as a module declaration");
+    jspp::syntax::Certification certification;
+    check(jspp::syntax::certify_lossless(functions, certification, diagnostic) ==
+              jspp::syntax::ParseStatus::Success && certification.exact &&
+              certification.deterministic &&
+              certification.source_bytes == functions.source().size() &&
+              certification.token_bytes + certification.trivia_bytes ==
+                  certification.source_bytes &&
+              certification.understood_expression_bytes > 0,
+          "lossless frontend certification failed");
     check(jspp::syntax::parse_lossless("'unterminated", invalid, diagnostic) ==
               jspp::syntax::ParseStatus::SyntaxError && diagnostic.line == 1,
           "unterminated string accepted");

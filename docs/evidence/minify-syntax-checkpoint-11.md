@@ -10,10 +10,13 @@ Semicolon-terminated module declarations, exported functions/classes and final
 semicolonless declarations receive bounded ranges. This is source ownership
 only: JS++ does not gain class or module execution, linking or host resolution.
 
-The pinned 12-fixture inventory accepts all 27,196,261 bytes and records 16
-class, 6 static-import and 8 export boundaries. The complete inventory remains
-approximately 1.5 seconds on the checkpoint host, and the 429,743 opaque
-delimiter/root barriers are unchanged.
+The checkpoint inventory initially recorded 16 class, 6 import and 8 export
+candidates. Checkpoint 12's ownership certification exposed those import/export
+candidates as property spellings such as `_a.export`; the classifier now
+requires static module declarations at the source root. The certified corpus
+therefore contains 15 class boundaries and no static imports/exports, which is
+consistent with these bundled artifacts. The 429,743 opaque delimiter/root
+barriers are unchanged.
 
 Gate: focused class/static-module/dynamic-import tests, the full 171-case JS++
 wall, the 12-fixture inventory and an unchanged TSCC tree.

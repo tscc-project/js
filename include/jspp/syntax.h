@@ -35,6 +35,14 @@ struct Node {
     std::size_t parent = 0;
     std::size_t first_token = 0, last_token = 0;
 };
+struct Certification {
+    std::size_t source_bytes = 0;
+    std::size_t token_bytes = 0;
+    std::size_t trivia_bytes = 0;
+    std::size_t understood_expression_bytes = 0;
+    bool exact = false;
+    bool deterministic = false;
+};
 
 class SyntaxTree {
 public:
@@ -56,5 +64,11 @@ private:
 // compile or execute it.
 ParseStatus parse_lossless(std::string source, SyntaxTree& output,
                            Diagnostic& diagnostic);
+
+// Certifies token ordering, byte-exact token/trivia reconstruction, node
+// ownership and deterministic reparsing. It does not claim executable
+// ECMAScript support.
+ParseStatus certify_lossless(const SyntaxTree& tree, Certification& result,
+                             Diagnostic& diagnostic);
 
 } // namespace jspp::syntax

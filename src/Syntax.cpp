@@ -1,6 +1,7 @@
 #include <jspp/syntax.h>
 
 #include <array>
+#include <algorithm>
 #include <cctype>
 #include <set>
 #include <utility>
@@ -481,10 +482,9 @@ ParseStatus parse_lossless(std::string source, SyntaxTree& output,
     }
     std::vector<std::size_t> containers;
     for (std::size_t token = 0; token < candidate.tokens_.size(); ++token) {
-        for (const auto node : closes[token]) {
-            if (!containers.empty() && containers.back() == node)
-                containers.pop_back();
-        }
+        while (!containers.empty() &&
+               candidate.nodes_[containers.back()].last_token <= token)
+            containers.pop_back();
         for (const auto node : opens[token]) containers.push_back(node);
         token_container[token] = containers.empty() ? 0 : containers.back();
     }
@@ -641,15 +641,32 @@ ParseStatus parse_lossless(std::string source, SyntaxTree& output,
         std::size_t end = body ? candidate.nodes_[body].last_token : body_token + 1;
         if (!body) {
             const std::size_t container = token_container[body_token];
-            while (end < candidate.tokens_.size() &&
-                   token_container[end] == container) {
+            while (end < candidate.tokens_.size()) {
+                if (container != 0 &&
+                    end == candidate.nodes_[container].last_token - 1)
+                    break;
+                if (token_container[end] != container) {
+                    std::size_t nested = 0;
+                    for (const auto node : opens[end])
+                        if (candidate.nodes_[node].parent == container) {
+                            nested = node;
+                            break;
+                        }
+                    if (!nested) break;
+                    end = candidate.nodes_[nested].last_token;
+                    continue;
+                }
                 const std::string_view separator = candidate.spelling(candidate.tokens_[end]);
                 if (separator == ";" || separator == ",") break;
                 ++end;
             }
         }
+        const std::size_t parent = candidate.spelling(candidate.tokens_[previous]) == ")"
+            ? candidate.nodes_[parameters].parent : token_container[begin];
+        if (parent != 0 && end >= candidate.nodes_[parent].last_token)
+            end = candidate.nodes_[parent].last_token - 1;
         add_function(begin, end, parameter_first, parameter_last, parameter_range,
-                     token_container[begin]);
+                     parent);
     }
 
     // Classes are bounded through their body delimiter, but the body remains
@@ -665,7 +682,8 @@ ParseStatus parse_lossless(std::string source, SyntaxTree& output,
         while (body_token < candidate.tokens_.size()) {
             if (candidate.spelling(candidate.tokens_[body_token]) == "{") break;
             const std::string_view boundary = candidate.spelling(candidate.tokens_[body_token]);
-            if (boundary == ";" || boundary == "=" || boundary == "=>") break;
+            if (boundary == ";" || boundary == "=" || boundary == "=>" ||
+                boundary == ":" || boundary == ",") break;
             body_token = next_significant(body_token + 1);
         }
         const std::size_t body = delimiter_opening_at(body_token, "{");
@@ -704,6 +722,7 @@ ParseStatus parse_lossless(std::string source, SyntaxTree& output,
     for (std::size_t token = 0; token < candidate.tokens_.size(); ++token) {
         const std::string_view word = candidate.spelling(candidate.tokens_[token]);
         NodeKind kind = NodeKind::Opaque;
+        if (token_container[token] != 0) continue;
         if (word == "import") {
             const std::size_t next = next_significant(token + 1);
             if (next < candidate.tokens_.size() &&
@@ -723,6 +742,117 @@ ParseStatus parse_lossless(std::string source, SyntaxTree& output,
                                     token_container[token], token, end});
     }
     output = std::move(candidate);
+    diagnostic = {};
+    return ParseStatus::Success;
+}
+
+ParseStatus certify_lossless(const SyntaxTree& tree, Certification& result,
+                             Diagnostic& diagnostic) {
+    Certification candidate;
+    candidate.source_bytes = tree.source().size();
+    std::string reconstruction;
+    reconstruction.reserve(tree.source().size());
+    std::size_t cursor = 0;
+    for (const Token& token : tree.tokens()) {
+        if (token.range.begin < cursor || token.range.begin > token.range.end ||
+            token.range.end > tree.source().size()) {
+            diagnostic = {token.range, 1, 1, "overlapping or invalid token range"};
+            return ParseStatus::SyntaxError;
+        }
+        reconstruction.append(tree.source().substr(cursor, token.range.begin - cursor));
+        reconstruction.append(tree.spelling(token));
+        candidate.token_bytes += token.range.end - token.range.begin;
+        cursor = token.range.end;
+    }
+    reconstruction.append(tree.source().substr(cursor));
+    candidate.trivia_bytes = candidate.source_bytes - candidate.token_bytes;
+    candidate.exact = reconstruction == tree.source();
+    if (!candidate.exact) {
+        diagnostic = {{0, tree.source().size()}, 1, 1,
+                      "token and trivia reconstruction differs from source"};
+        return ParseStatus::SyntaxError;
+    }
+    std::vector<SourceRange> understood;
+    for (std::size_t i = 0; i < tree.nodes().size(); ++i) {
+        const Node& node = tree.nodes()[i];
+        if (node.range.begin > node.range.end || node.range.end > tree.source().size() ||
+            node.first_token > node.last_token || node.last_token > tree.tokens().size() ||
+            node.parent >= tree.nodes().size()) {
+            diagnostic = {node.range, 1, 1, "invalid syntax node ownership"};
+            return ParseStatus::SyntaxError;
+        }
+        if (i != 0) {
+            if (node.parent == i) {
+                diagnostic = {node.range, 1, 1, "syntax node owns itself"};
+                return ParseStatus::SyntaxError;
+            }
+            const Node& parent = tree.nodes()[node.parent];
+            if (parent.range.begin > node.range.begin ||
+                node.range.end > parent.range.end) {
+                diagnostic = {node.range, 1, 1,
+                              "syntax node " + std::to_string(i) +
+                              " [" + std::to_string(node.range.begin) + "," +
+                              std::to_string(node.range.end) + ")" +
+                              " escapes parent " + std::to_string(node.parent) +
+                              " [" + std::to_string(parent.range.begin) + "," +
+                              std::to_string(parent.range.end) + ")"};
+                return ParseStatus::SyntaxError;
+            }
+        }
+        if (node.kind == NodeKind::Expression &&
+            node.semantics == SemanticStatus::Understood &&
+            node.range.begin < node.range.end)
+            understood.push_back(node.range);
+    }
+    std::sort(understood.begin(), understood.end(),
+              [](const SourceRange& left, const SourceRange& right) {
+                  return left.begin < right.begin ||
+                         (left.begin == right.begin && left.end < right.end);
+              });
+    SourceRange merged{};
+    bool have_merged = false;
+    for (const SourceRange range : understood) {
+        if (!have_merged || range.begin > merged.end) {
+            if (have_merged)
+                candidate.understood_expression_bytes += merged.end - merged.begin;
+            merged = range;
+            have_merged = true;
+        } else if (range.end > merged.end) {
+            merged.end = range.end;
+        }
+    }
+    if (have_merged)
+        candidate.understood_expression_bytes += merged.end - merged.begin;
+
+    SyntaxTree repeated;
+    Diagnostic repeated_diagnostic;
+    if (parse_lossless(std::string(tree.source()), repeated, repeated_diagnostic) !=
+        ParseStatus::Success) {
+        diagnostic = repeated_diagnostic;
+        return ParseStatus::SyntaxError;
+    }
+    candidate.deterministic = repeated.tokens().size() == tree.tokens().size() &&
+                              repeated.nodes().size() == tree.nodes().size();
+    for (std::size_t i = 0; candidate.deterministic && i < tree.tokens().size(); ++i) {
+        const Token& left = tree.tokens()[i];
+        const Token& right = repeated.tokens()[i];
+        candidate.deterministic = left.kind == right.kind &&
+            left.range.begin == right.range.begin && left.range.end == right.range.end;
+    }
+    for (std::size_t i = 0; candidate.deterministic && i < tree.nodes().size(); ++i) {
+        const Node& left = tree.nodes()[i];
+        const Node& right = repeated.nodes()[i];
+        candidate.deterministic = left.kind == right.kind &&
+            left.semantics == right.semantics && left.range.begin == right.range.begin &&
+            left.range.end == right.range.end && left.parent == right.parent &&
+            left.first_token == right.first_token && left.last_token == right.last_token;
+    }
+    if (!candidate.deterministic) {
+        diagnostic = {{0, tree.source().size()}, 1, 1,
+                      "lossless syntax partition is not deterministic"};
+        return ParseStatus::SyntaxError;
+    }
+    result = candidate;
     diagnostic = {};
     return ParseStatus::Success;
 }
