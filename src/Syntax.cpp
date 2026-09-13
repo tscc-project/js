@@ -723,6 +723,14 @@ ParseStatus parse_lossless(std::string source, SyntaxTree& output,
         const std::string_view word = candidate.spelling(candidate.tokens_[token]);
         NodeKind kind = NodeKind::Opaque;
         if (token_container[token] != 0) continue;
+        std::size_t previous = token;
+        while (previous > 0) {
+            --previous;
+            if (candidate.tokens_[previous].kind != TokenKind::Comment) break;
+        }
+        if (token > 0 && (candidate.spelling(candidate.tokens_[previous]) == "." ||
+                          candidate.spelling(candidate.tokens_[previous]) == "?."))
+            continue;
         if (word == "import") {
             const std::size_t next = next_significant(token + 1);
             if (next < candidate.tokens_.size() &&

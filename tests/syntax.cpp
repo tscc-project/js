@@ -159,6 +159,15 @@ int main() {
     for (const auto& node : dynamic_import.nodes())
         check(node.kind != jspp::syntax::NodeKind::ImportDeclaration,
               "dynamic import was classified as a module declaration");
+    jspp::syntax::SyntaxTree property_modules;
+    check(jspp::syntax::parse_lossless(
+              "obj.import=1;obj.export=2;const x=obj.import+obj.export;",
+              property_modules, diagnostic) == jspp::syntax::ParseStatus::Success,
+          "property import/export sample rejected");
+    for (const auto& node : property_modules.nodes())
+        check(node.kind != jspp::syntax::NodeKind::ImportDeclaration &&
+                  node.kind != jspp::syntax::NodeKind::ExportDeclaration,
+              "property named import/export was classified as a module declaration");
     jspp::syntax::Certification certification;
     check(jspp::syntax::certify_lossless(functions, certification, diagnostic) ==
               jspp::syntax::ParseStatus::Success && certification.exact &&
