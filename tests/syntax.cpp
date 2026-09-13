@@ -55,7 +55,22 @@ int main() {
     }
     check(regexes == 1 && templates == 4 && hashbangs == 1 && slashes == 2,
           "regex/division, nested-template, or hashbang lexical goal incorrect");
-    jspp::syntax::SyntaxTree invalid;
+    jspp::syntax::SyntaxTree structure, invalid;
+    check(jspp::syntax::parse_lossless("f({x:[`a${g(y)}`]});", structure,
+                                       diagnostic) == jspp::syntax::ParseStatus::Success,
+          "balanced structure rejected");
+    check(structure.nodes().size() == 6,
+          "ordinary and template delimiters were not all retained");
+    for (std::size_t i = 1; i < structure.nodes().size(); ++i) {
+        const auto& node = structure.nodes()[i];
+        check(node.kind == jspp::syntax::NodeKind::Delimited && node.parent < i &&
+                  node.first_token < node.last_token &&
+                  node.range.begin < node.range.end,
+              "delimiter node ownership is invalid");
+    }
+    check(jspp::syntax::parse_lossless("f([)]);", invalid, diagnostic) ==
+              jspp::syntax::ParseStatus::SyntaxError,
+          "mismatched delimiters accepted");
     check(jspp::syntax::parse_lossless("'unterminated", invalid, diagnostic) ==
               jspp::syntax::ParseStatus::SyntaxError && diagnostic.line == 1,
           "unterminated string accepted");

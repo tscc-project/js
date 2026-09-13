@@ -312,6 +312,67 @@ ParseStatus parse_lossless(std::string source, SyntaxTree& output,
     if (scanner.scan() == ParseStatus::SyntaxError) return ParseStatus::SyntaxError;
     candidate.nodes_.push_back({NodeKind::Root, {0, candidate.source_.size()},
                                 0, 0, candidate.tokens_.size()});
+    struct Delimiter {
+        char close;
+        std::size_t node;
+    };
+    std::vector<Delimiter> delimiters;
+    const auto position = [&](std::size_t offset) {
+        std::size_t line = 1, column = 1;
+        for (std::size_t i = 0; i < offset; ++i) {
+            if (candidate.source_[i] == '\n') { ++line; column = 1; }
+            else ++column;
+        }
+        return std::pair<std::size_t, std::size_t>{line, column};
+    };
+    const auto structural_error = [&](const Token& token, const char* message) {
+        const auto [line, column] = position(token.range.begin);
+        diagnostic = {token.range, line, column, message};
+        return ParseStatus::SyntaxError;
+    };
+    for (std::size_t token_index = 0; token_index < candidate.tokens_.size();
+         ++token_index) {
+        const Token& token = candidate.tokens_[token_index];
+        const std::string_view spelling = candidate.spelling(token);
+        char close = 0;
+        if (token.kind == TokenKind::Punctuator) {
+            if (spelling == "(") close = ')';
+            else if (spelling == "[") close = ']';
+            else if (spelling == "{") close = '}';
+        } else if (token.kind == TokenKind::Template &&
+                   spelling.size() >= 2 &&
+                   spelling.substr(spelling.size() - 2) == "${") {
+            close = '}';
+        }
+        if (close) {
+            const std::size_t parent = delimiters.empty() ? 0 : delimiters.back().node;
+            const std::size_t node = candidate.nodes_.size();
+            candidate.nodes_.push_back({NodeKind::Delimited,
+                                        {token.range.begin, token.range.end}, parent,
+                                        token_index, token_index + 1});
+            delimiters.push_back({close, node});
+            continue;
+        }
+        char actual_close = 0;
+        if (token.kind == TokenKind::Punctuator && spelling.size() == 1 &&
+            (spelling[0] == ')' || spelling[0] == ']' || spelling[0] == '}'))
+            actual_close = spelling[0];
+        else if (token.kind == TokenKind::Template && !spelling.empty() &&
+                 spelling.front() == '}')
+            actual_close = '}';
+        if (!actual_close) continue;
+        if (delimiters.empty() || delimiters.back().close != actual_close)
+            return structural_error(token, "unmatched closing delimiter");
+        Node& node = candidate.nodes_[delimiters.back().node];
+        node.range.end = token.range.end;
+        node.last_token = token_index + 1;
+        delimiters.pop_back();
+    }
+    if (!delimiters.empty()) {
+        const Node& node = candidate.nodes_[delimiters.back().node];
+        return structural_error(candidate.tokens_[node.first_token],
+                                "unclosed delimiter");
+    }
     output = std::move(candidate);
     diagnostic = {};
     return ParseStatus::Success;
