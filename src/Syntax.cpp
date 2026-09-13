@@ -551,6 +551,106 @@ ParseStatus parse_lossless(std::string source, SyntaxTree& output,
                                     block.range, block.parent, block.first_token,
                                     block.last_token});
     }
+
+    const auto delimiter_opening_at = [&](std::size_t token,
+                                          std::string_view spelling) {
+        if (token >= opens.size()) return std::size_t{0};
+        for (const auto node : opens[token])
+            if (candidate.spelling(candidate.tokens_[token]) == spelling)
+                return node;
+        return std::size_t{0};
+    };
+    const auto next_significant = [&](std::size_t token) {
+        while (token < candidate.tokens_.size() && !significant(token)) ++token;
+        return token;
+    };
+    const auto previous_significant = [&](std::size_t token) {
+        while (token > 0) {
+            --token;
+            if (significant(token)) return token;
+        }
+        return candidate.tokens_.size();
+    };
+    const auto add_function = [&](std::size_t begin, std::size_t end,
+                                  std::size_t parameter_first,
+                                  std::size_t parameter_last,
+                                  SourceRange parameter_range,
+                                  std::size_t parent) {
+        if (begin >= end || end > candidate.tokens_.size()) return;
+        const std::size_t function = candidate.nodes_.size();
+        candidate.nodes_.push_back({NodeKind::Function, SemanticStatus::Understood,
+                                    {candidate.tokens_[begin].range.begin,
+                                     candidate.tokens_[end - 1].range.end},
+                                    parent, begin, end});
+        candidate.nodes_.push_back({NodeKind::Parameters, SemanticStatus::Understood,
+                                    parameter_range, function, parameter_first,
+                                    parameter_last});
+    };
+    // Ordinary functions: retain the whole header/body and parameter range.
+    for (std::size_t token = 0; token < candidate.tokens_.size(); ++token) {
+        if (candidate.spelling(candidate.tokens_[token]) != "function") continue;
+        std::size_t parameter_token = next_significant(token + 1);
+        if (parameter_token < candidate.tokens_.size() &&
+            candidate.spelling(candidate.tokens_[parameter_token]) == "*")
+            parameter_token = next_significant(parameter_token + 1);
+        if (parameter_token < candidate.tokens_.size() &&
+            candidate.tokens_[parameter_token].kind == TokenKind::Identifier)
+            parameter_token = next_significant(parameter_token + 1);
+        const std::size_t parameters = delimiter_opening_at(parameter_token, "(");
+        if (!parameters) continue;
+        const std::size_t body_token = next_significant(
+            candidate.nodes_[parameters].last_token);
+        const std::size_t body = delimiter_opening_at(body_token, "{");
+        if (!body) continue;
+        const Node parameter_region = candidate.nodes_[parameters];
+        add_function(token, candidate.nodes_[body].last_token,
+                     parameter_region.first_token, parameter_region.last_token,
+                     parameter_region.range,
+                     candidate.nodes_[body].parent);
+    }
+    // Arrows may use one identifier or a parenthesized parameter list. Braced
+    // bodies are exactly bounded; expression bodies stop at their owning
+    // comma/semicolon without crossing a delimiter container.
+    for (std::size_t arrow = 0; arrow < candidate.tokens_.size(); ++arrow) {
+        if (candidate.spelling(candidate.tokens_[arrow]) != "=>") continue;
+        const std::size_t previous = previous_significant(arrow);
+        if (previous == candidate.tokens_.size()) continue;
+        std::size_t parameters = 0;
+        std::size_t begin = previous;
+        std::size_t parameter_first = previous, parameter_last = previous + 1;
+        SourceRange parameter_range = candidate.tokens_[previous].range;
+        if (candidate.spelling(candidate.tokens_[previous]) == ")") {
+            for (const auto node : closes[previous + 1]) {
+                if (candidate.spelling(
+                        candidate.tokens_[candidate.nodes_[node].first_token]) == "(") {
+                    parameters = node;
+                    begin = candidate.nodes_[node].first_token;
+                    parameter_first = candidate.nodes_[node].first_token;
+                    parameter_last = candidate.nodes_[node].last_token;
+                    parameter_range = candidate.nodes_[node].range;
+                    break;
+                }
+            }
+        } else if (candidate.tokens_[previous].kind == TokenKind::Identifier) {
+            parameters = candidate.nodes_.size(); // non-zero presence marker
+        }
+        if (!parameters) continue;
+        const std::size_t body_token = next_significant(arrow + 1);
+        if (body_token >= candidate.tokens_.size()) continue;
+        const std::size_t body = delimiter_opening_at(body_token, "{");
+        std::size_t end = body ? candidate.nodes_[body].last_token : body_token + 1;
+        if (!body) {
+            const std::size_t container = token_container[body_token];
+            while (end < candidate.tokens_.size() &&
+                   token_container[end] == container) {
+                const std::string_view separator = candidate.spelling(candidate.tokens_[end]);
+                if (separator == ";" || separator == ",") break;
+                ++end;
+            }
+        }
+        add_function(begin, end, parameter_first, parameter_last, parameter_range,
+                     token_container[begin]);
+    }
     output = std::move(candidate);
     diagnostic = {};
     return ParseStatus::Success;

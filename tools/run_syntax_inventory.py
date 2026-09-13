@@ -31,10 +31,10 @@ def main() -> int:
         )
         fields = run.stdout.rstrip("\n").split("\t")
         record = {"artifact": definition.parent.name, "path": str(source)}
-        if run.returncode == 0 and len(fields) == 11 and fields[0] == "ok":
+        if run.returncode == 0 and len(fields) == 13 and fields[0] == "ok":
             keys = ("bytes", "tokens", "nodes", "opaque_nodes", "delimited_nodes",
                     "identifiers", "regexes", "template_chunks", "expressions",
-                    "statements")
+                    "statements", "functions", "parameters")
             record.update({key: int(value) for key, value in zip(keys, fields[1:])})
             record["accepted"] = True
         else:
@@ -50,6 +50,8 @@ def main() -> int:
         "nodes": sum(item.get("nodes", 0) for item in results),
         "expressions": sum(item.get("expressions", 0) for item in results),
         "statements": sum(item.get("statements", 0) for item in results),
+        "functions": sum(item.get("functions", 0) for item in results),
+        "parameters": sum(item.get("parameters", 0) for item in results),
     }
     report = {"summary": summary, "fixtures": results}
     rendered = json.dumps(report, indent=2) + "\n"

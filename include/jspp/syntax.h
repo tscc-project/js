@@ -12,7 +12,9 @@ enum class TokenKind {
     Identifier, Keyword, Number, String, Regex, Template, Punctuator, Comment,
     Hashbang
 };
-enum class NodeKind { Root, Delimited, Expression, Statement, Opaque };
+enum class NodeKind {
+    Root, Delimited, Expression, Statement, Function, Parameters, Opaque
+};
 enum class SemanticStatus { Opaque, Understood };
 
 struct SourceRange { std::size_t begin = 0, end = 0; };

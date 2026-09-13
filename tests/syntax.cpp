@@ -125,6 +125,19 @@ int main() {
     }
     check(statement_nodes >= 4 && empty_statements == 1,
           "statement/block ownership or meaningful empty statement missing");
+    jspp::syntax::SyntaxTree functions;
+    check(jspp::syntax::parse_lossless(
+              "function f({x}=v,...rest){return x;}const g=async (a=1)=>a+1;"
+              "const h=x=>({x});f(1);", functions, diagnostic) ==
+              jspp::syntax::ParseStatus::Success,
+          "function/parameter sample rejected");
+    std::size_t function_nodes = 0, parameter_nodes = 0;
+    for (const auto& node : functions.nodes()) {
+        function_nodes += node.kind == jspp::syntax::NodeKind::Function;
+        parameter_nodes += node.kind == jspp::syntax::NodeKind::Parameters;
+    }
+    check(function_nodes == 3 && parameter_nodes == 3,
+          "ordinary/arrow function or parameter boundaries missing");
     check(jspp::syntax::parse_lossless("'unterminated", invalid, diagnostic) ==
               jspp::syntax::ParseStatus::SyntaxError && diagnostic.line == 1,
           "unterminated string accepted");
