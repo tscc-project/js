@@ -109,6 +109,22 @@ int main() {
     for (const auto& node : guarded_expression.nodes())
         check(node.kind != jspp::syntax::NodeKind::Expression,
               "unsupported class expression crossed an understood boundary");
+    jspp::syntax::SyntaxTree statements;
+    check(jspp::syntax::parse_lossless(
+              "let x=0;if(x){x++;}while(x);return x;", statements, diagnostic) ==
+              jspp::syntax::ParseStatus::Success,
+          "high-value statement sample rejected");
+    std::size_t statement_nodes = 0, empty_statements = 0;
+    for (const auto& node : statements.nodes()) {
+        if (node.kind != jspp::syntax::NodeKind::Statement) continue;
+        ++statement_nodes;
+        empty_statements += statements.source().substr(
+            node.range.begin, node.range.end - node.range.begin) == ";";
+        check(node.semantics == jspp::syntax::SemanticStatus::Understood,
+              "statement boundary is not explicitly understood");
+    }
+    check(statement_nodes >= 4 && empty_statements == 1,
+          "statement/block ownership or meaningful empty statement missing");
     check(jspp::syntax::parse_lossless("'unterminated", invalid, diagnostic) ==
               jspp::syntax::ParseStatus::SyntaxError && diagnostic.line == 1,
           "unterminated string accepted");

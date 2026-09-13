@@ -467,6 +467,90 @@ ParseStatus parse_lossless(std::string source, SyntaxTree& output,
         if (opener == "(" || opener == "[")
             expression_range(node.first_token + 1, node.last_token - 1, i);
     }
+
+    // Partition semicolon-terminated statements within the root and brace
+    // containers. Parentheses (notably for-loop headers), brackets and
+    // templates are intentionally excluded from statement ownership.
+    std::vector<std::size_t> token_container(candidate.tokens_.size(), 0);
+    std::vector<std::vector<std::size_t>> opens(candidate.tokens_.size());
+    std::vector<std::vector<std::size_t>> closes(candidate.tokens_.size() + 1);
+    for (std::size_t i = 1; i < delimiter_count; ++i) {
+        const Node& node = candidate.nodes_[i];
+        opens[node.first_token].push_back(i);
+        closes[node.last_token].push_back(i);
+    }
+    std::vector<std::size_t> containers;
+    for (std::size_t token = 0; token < candidate.tokens_.size(); ++token) {
+        for (const auto node : closes[token]) {
+            if (!containers.empty() && containers.back() == node)
+                containers.pop_back();
+        }
+        for (const auto node : opens[token]) containers.push_back(node);
+        token_container[token] = containers.empty() ? 0 : containers.back();
+    }
+    const auto statement_container = [&](std::size_t container) {
+        if (container == 0) return true;
+        const Node& node = candidate.nodes_[container];
+        return candidate.spelling(candidate.tokens_[node.first_token]) == "{";
+    };
+    const auto add_statement = [&](std::size_t first, std::size_t last,
+                                   std::size_t parent) {
+        while (first < last && !significant(first)) ++first;
+        while (first < last && !significant(last - 1)) --last;
+        if (first == last) return;
+        const std::string_view initial = candidate.spelling(candidate.tokens_[first]);
+        if (initial == "class" || initial == "import" || initial == "export" ||
+            initial == "case" || initial == "default") return;
+        candidate.nodes_.push_back({NodeKind::Statement, SemanticStatus::Understood,
+                                    {candidate.tokens_[first].range.begin,
+                                     candidate.tokens_[last - 1].range.end},
+                                    parent, first, last});
+    };
+    std::vector<std::size_t> statement_begin(delimiter_count, 0);
+    for (std::size_t i = 1; i < delimiter_count; ++i)
+        statement_begin[i] = candidate.nodes_[i].first_token + 1;
+    for (std::size_t token = 0; token < candidate.tokens_.size(); ++token) {
+        const std::size_t container = token_container[token];
+        if (!statement_container(container)) continue;
+        const std::string_view punctuation = candidate.spelling(candidate.tokens_[token]);
+        if (punctuation != ";") continue;
+        bool empty_control_body = false;
+        if (token > 0 && candidate.spelling(candidate.tokens_[token - 1]) == ")") {
+            for (const auto i : closes[token]) {
+                const Node& header = candidate.nodes_[i];
+                if (header.first_token == 0) continue;
+                const std::string_view control = candidate.spelling(
+                    candidate.tokens_[header.first_token - 1]);
+                empty_control_body = control == "while" || control == "for" ||
+                                     control == "if" || control == "with";
+                if (empty_control_body) break;
+            }
+        }
+        if (empty_control_body)
+            candidate.nodes_.push_back({NodeKind::Statement, SemanticStatus::Understood,
+                                        candidate.tokens_[token].range, container,
+                                        token, token + 1});
+        const std::size_t first = statement_begin[container];
+        if (first == token && !empty_control_body) {
+            // Empty statements are semantically meaningful, including loop
+            // bodies such as `while (condition);`.
+            candidate.nodes_.push_back({NodeKind::Statement, SemanticStatus::Understood,
+                                        candidate.tokens_[token].range, container,
+                                        token, token + 1});
+        } else {
+            add_statement(first, token + 1, container);
+        }
+        statement_begin[container] = token + 1;
+    }
+    // Braced blocks have exact boundaries even when their contents remain a
+    // mixture of understood statements and opaque syntax.
+    for (std::size_t i = 1; i < delimiter_count; ++i) {
+        const Node& block = candidate.nodes_[i];
+        if (candidate.spelling(candidate.tokens_[block.first_token]) != "{") continue;
+        candidate.nodes_.push_back({NodeKind::Statement, SemanticStatus::Understood,
+                                    block.range, block.parent, block.first_token,
+                                    block.last_token});
+    }
     output = std::move(candidate);
     diagnostic = {};
     return ParseStatus::Success;
