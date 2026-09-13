@@ -651,6 +651,77 @@ ParseStatus parse_lossless(std::string source, SyntaxTree& output,
         add_function(begin, end, parameter_first, parameter_last, parameter_range,
                      token_container[begin]);
     }
+
+    // Classes are bounded through their body delimiter, but the body remains
+    // opaque: this is ownership for callers, not class-runtime support.
+    for (std::size_t token = 0; token < candidate.tokens_.size(); ++token) {
+        if (candidate.spelling(candidate.tokens_[token]) != "class") continue;
+        const std::size_t previous = previous_significant(token);
+        if (previous != candidate.tokens_.size()) {
+            const std::string_view before = candidate.spelling(candidate.tokens_[previous]);
+            if (before == "." || before == "?.") continue;
+        }
+        std::size_t body_token = next_significant(token + 1);
+        while (body_token < candidate.tokens_.size()) {
+            if (candidate.spelling(candidate.tokens_[body_token]) == "{") break;
+            const std::string_view boundary = candidate.spelling(candidate.tokens_[body_token]);
+            if (boundary == ";" || boundary == "=" || boundary == "=>") break;
+            body_token = next_significant(body_token + 1);
+        }
+        const std::size_t body = delimiter_opening_at(body_token, "{");
+        if (!body) continue;
+        candidate.nodes_.push_back({NodeKind::Class, SemanticStatus::Understood,
+                                    {candidate.tokens_[token].range.begin,
+                                     candidate.tokens_[candidate.nodes_[body].last_token - 1].range.end},
+                                    token_container[token], token,
+                                    candidate.nodes_[body].last_token});
+    }
+    const auto module_end = [&](std::size_t begin) {
+        const std::size_t container = token_container[begin];
+        for (std::size_t token = begin + 1; token < candidate.tokens_.size(); ++token) {
+            if (token_container[token] != container) continue;
+            const std::string_view word = candidate.spelling(candidate.tokens_[token]);
+            if (word == ";") return token + 1;
+            if (word == "class" || word == "function") {
+                for (std::size_t i = delimiter_count; i < candidate.nodes_.size(); ++i) {
+                    const Node& region = candidate.nodes_[i];
+                    if (region.first_token == token &&
+                        (region.kind == NodeKind::Class ||
+                         region.kind == NodeKind::Function))
+                        return region.last_token;
+                }
+            }
+            if (token > begin + 1 && (word == "import" || word == "export")) {
+                const SourceRange gap{candidate.tokens_[token - 1].range.end,
+                                      candidate.tokens_[token].range.begin};
+                if (candidate.source_.substr(gap.begin, gap.end - gap.begin).find('\n') !=
+                    std::string::npos)
+                    return token;
+            }
+        }
+        return candidate.tokens_.size();
+    };
+    for (std::size_t token = 0; token < candidate.tokens_.size(); ++token) {
+        const std::string_view word = candidate.spelling(candidate.tokens_[token]);
+        NodeKind kind = NodeKind::Opaque;
+        if (word == "import") {
+            const std::size_t next = next_significant(token + 1);
+            if (next < candidate.tokens_.size() &&
+                candidate.spelling(candidate.tokens_[next]) != "(" &&
+                candidate.spelling(candidate.tokens_[next]) != "." &&
+                candidate.spelling(candidate.tokens_[next]) != "?.")
+                kind = NodeKind::ImportDeclaration;
+        } else if (word == "export") {
+            kind = NodeKind::ExportDeclaration;
+        }
+        if (kind == NodeKind::Opaque) continue;
+        const std::size_t end = module_end(token);
+        if (end <= token || end > candidate.tokens_.size()) continue;
+        candidate.nodes_.push_back({kind, SemanticStatus::Understood,
+                                    {candidate.tokens_[token].range.begin,
+                                     candidate.tokens_[end - 1].range.end},
+                                    token_container[token], token, end});
+    }
     output = std::move(candidate);
     diagnostic = {};
     return ParseStatus::Success;

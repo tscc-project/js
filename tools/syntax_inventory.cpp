@@ -26,7 +26,8 @@ int main(int argc, char** argv) {
         return 1;
     }
     std::size_t opaque = 0, delimited = 0, expressions = 0, statements = 0,
-                functions = 0, parameters = 0,
+                functions = 0, parameters = 0, classes = 0, imports = 0,
+                exports = 0,
                 identifiers = 0, regexes = 0,
                 templates = 0;
     for (const auto& node : tree.nodes()) {
@@ -36,6 +37,9 @@ int main(int argc, char** argv) {
         statements += node.kind == jspp::syntax::NodeKind::Statement;
         functions += node.kind == jspp::syntax::NodeKind::Function;
         parameters += node.kind == jspp::syntax::NodeKind::Parameters;
+        classes += node.kind == jspp::syntax::NodeKind::Class;
+        imports += node.kind == jspp::syntax::NodeKind::ImportDeclaration;
+        exports += node.kind == jspp::syntax::NodeKind::ExportDeclaration;
     }
     for (const auto& token : tree.tokens()) {
         identifiers += token.kind == jspp::syntax::TokenKind::Identifier;
@@ -46,5 +50,6 @@ int main(int argc, char** argv) {
               << '\t' << tree.nodes().size() << '\t' << opaque << '\t'
               << delimited << '\t' << identifiers << '\t' << regexes << '\t'
               << templates << '\t' << expressions << '\t' << statements << '\t'
-              << functions << '\t' << parameters << '\n';
+              << functions << '\t' << parameters << '\t' << classes << '\t'
+              << imports << '\t' << exports << '\n';
 }

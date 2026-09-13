@@ -13,7 +13,8 @@ enum class TokenKind {
     Hashbang
 };
 enum class NodeKind {
-    Root, Delimited, Expression, Statement, Function, Parameters, Opaque
+    Root, Delimited, Expression, Statement, Function, Parameters, Class,
+    ImportDeclaration, ExportDeclaration, Opaque
 };
 enum class SemanticStatus { Opaque, Understood };
 

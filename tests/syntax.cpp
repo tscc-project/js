@@ -138,6 +138,27 @@ int main() {
     }
     check(function_nodes == 3 && parameter_nodes == 3,
           "ordinary/arrow function or parameter boundaries missing");
+    jspp::syntax::SyntaxTree modules;
+    check(jspp::syntax::parse_lossless(
+              "import x from 'x';export {x};export default class C extends B {m(){}}",
+              modules, diagnostic) == jspp::syntax::ParseStatus::Success,
+          "class/module boundary sample rejected");
+    std::size_t classes = 0, imports = 0, exports = 0;
+    for (const auto& node : modules.nodes()) {
+        classes += node.kind == jspp::syntax::NodeKind::Class;
+        imports += node.kind == jspp::syntax::NodeKind::ImportDeclaration;
+        exports += node.kind == jspp::syntax::NodeKind::ExportDeclaration;
+    }
+    check(classes == 1 && imports == 1 && exports == 2,
+          "class/import/export boundaries missing");
+    jspp::syntax::SyntaxTree dynamic_import;
+    check(jspp::syntax::parse_lossless("const p=import('x');const u=import.meta.url;",
+                                       dynamic_import,
+                                       diagnostic) == jspp::syntax::ParseStatus::Success,
+          "dynamic import sample rejected");
+    for (const auto& node : dynamic_import.nodes())
+        check(node.kind != jspp::syntax::NodeKind::ImportDeclaration,
+              "dynamic import was classified as a module declaration");
     check(jspp::syntax::parse_lossless("'unterminated", invalid, diagnostic) ==
               jspp::syntax::ParseStatus::SyntaxError && diagnostic.line == 1,
           "unterminated string accepted");
