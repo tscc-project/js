@@ -13,6 +13,7 @@ enum class TokenKind {
     Hashbang
 };
 enum class NodeKind { Root, Delimited, Opaque };
+enum class SemanticStatus { Opaque, Understood };
 
 struct SourceRange { std::size_t begin = 0, end = 0; };
 struct Diagnostic {
@@ -26,6 +27,7 @@ struct Token {
 };
 struct Node {
     NodeKind kind = NodeKind::Opaque;
+    SemanticStatus semantics = SemanticStatus::Opaque;
     SourceRange range;
     std::size_t parent = 0;
     std::size_t first_token = 0, last_token = 0;

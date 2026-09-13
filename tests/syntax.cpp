@@ -21,6 +21,8 @@ int main() {
     check(tree.source() == "const answer = 42;", "syntax view does not own source");
     check(tree.nodes().size() == 1 && tree.nodes()[0].range.end == tree.source().size(),
           "syntax root does not own complete source");
+    check(tree.nodes()[0].semantics == jspp::syntax::SemanticStatus::Opaque,
+          "unparsed root is not protected by an opaque barrier");
     check(tree.tokens().size() == 5, "lossless token count");
     check(tree.spelling(tree.tokens()[0]) == "const" &&
           tree.tokens()[0].kind == jspp::syntax::TokenKind::Keyword,
@@ -64,6 +66,7 @@ int main() {
     for (std::size_t i = 1; i < structure.nodes().size(); ++i) {
         const auto& node = structure.nodes()[i];
         check(node.kind == jspp::syntax::NodeKind::Delimited && node.parent < i &&
+                  node.semantics == jspp::syntax::SemanticStatus::Opaque &&
                   node.first_token < node.last_token &&
                   node.range.begin < node.range.end,
               "delimiter node ownership is invalid");
@@ -71,6 +74,17 @@ int main() {
     check(jspp::syntax::parse_lossless("f([)]);", invalid, diagnostic) ==
               jspp::syntax::ParseStatus::SyntaxError,
           "mismatched delimiters accepted");
+    std::string reconstructed;
+    std::size_t cursor = 0;
+    for (const auto& token : structure.tokens()) {
+        reconstructed.append(structure.source().substr(
+            cursor, token.range.begin - cursor));
+        reconstructed.append(structure.spelling(token));
+        cursor = token.range.end;
+    }
+    reconstructed.append(structure.source().substr(cursor));
+    check(reconstructed == structure.source(),
+          "opaque source cannot be reproduced byte for byte");
     check(jspp::syntax::parse_lossless("'unterminated", invalid, diagnostic) ==
               jspp::syntax::ParseStatus::SyntaxError && diagnostic.line == 1,
           "unterminated string accepted");

@@ -310,8 +310,9 @@ ParseStatus parse_lossless(std::string source, SyntaxTree& output,
     candidate.source_ = std::move(source);
     Scanner scanner(candidate, diagnostic);
     if (scanner.scan() == ParseStatus::SyntaxError) return ParseStatus::SyntaxError;
-    candidate.nodes_.push_back({NodeKind::Root, {0, candidate.source_.size()},
-                                0, 0, candidate.tokens_.size()});
+    candidate.nodes_.push_back({NodeKind::Root, SemanticStatus::Opaque,
+                                {0, candidate.source_.size()}, 0, 0,
+                                candidate.tokens_.size()});
     struct Delimiter {
         char close;
         std::size_t node;
@@ -347,7 +348,7 @@ ParseStatus parse_lossless(std::string source, SyntaxTree& output,
         if (close) {
             const std::size_t parent = delimiters.empty() ? 0 : delimiters.back().node;
             const std::size_t node = candidate.nodes_.size();
-            candidate.nodes_.push_back({NodeKind::Delimited,
+            candidate.nodes_.push_back({NodeKind::Delimited, SemanticStatus::Opaque,
                                         {token.range.begin, token.range.end}, parent,
                                         token_index, token_index + 1});
             delimiters.push_back({close, node});
