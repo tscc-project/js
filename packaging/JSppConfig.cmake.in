@@ -3,4 +3,4 @@ add_library(JSpp::JS SHARED IMPORTED)
 set_target_properties(JSpp::JS PROPERTIES
   IMPORTED_LOCATION "${_JSPP_PREFIX}/lib/libjs.so.0"
   INTERFACE_INCLUDE_DIRECTORIES "${_JSPP_PREFIX}/include")
-set(JSpp_VERSION "0.0.0-dev")
+set(JSpp_VERSION "0.0.1")

@@ -63,7 +63,7 @@ $(BUILD)/standalone-lifetime: tests/standalone_lifetime.cpp $(STATIC)
 test-heap: $(BUILD)/heap
 	./$(BUILD)/heap
 test-unit: $(CLI) $(BUILD)/lifecycle $(BUILD)/frontend $(BUILD)/vm test-heap $(BUILD)/standalone-lifetime
-	test "$$($(CLI) --version)" = "JS++ 0.0.0-dev"
+	test "$$($(CLI) --version)" = "JS++ 0.0.1"
 	./$(BUILD)/lifecycle
 	./$(BUILD)/frontend
 	./$(BUILD)/vm

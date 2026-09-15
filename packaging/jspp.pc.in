@@ -5,7 +5,7 @@ includedir=${prefix}/include
 
 Name: JS++
 Description: Embeddable JS++ runtime
-Version: 0.0.0-dev
+Version: 0.0.1
 Libs: -L${libdir} -ljs
 Libs.private: -lstdc++ -lm -pthread
 Cflags: -I${includedir}
